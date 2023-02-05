@@ -34,6 +34,4 @@ We may update this privacy policy from time to time to reflect changes to our pr
 
 Contact Information
 
-If you have any questions or concerns about this privacy policy, or our privacy practices, please contact us by email at [contact email], or by mail at [Company Name, Address, City, Province, Postal Code].
-
-Effective Date: [insert date of the most recent revision to the policy].
+Effective Date: February 5, 2023. V1.
