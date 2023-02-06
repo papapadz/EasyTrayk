@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".SignUp"
+    android:background="@drawable/side_nav_bar"
+    android:orientation="vertical">
+    <ScrollView
+
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:background="@color/white"
+            android:layout_margin="10dp"
+            android:padding="25dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/txt_if_rejected"
+                android:visibility="gone"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:textSize="18dp"
+                android:textColor="@color/colorRed"
+                android:text="Please upload your License!" />
+
+            <TextView
+                android:textAlignment="center"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="26dp"
+                android:textStyle="bold"
+                android:textColor="@color/green"
+                android:text="PROFILE"
+                android:layout_marginBottom="10dp"/>
+
+            <ImageView
+                android:id="@+id/image_view"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:scaleType="centerCrop"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_menu_camera" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Upload Profile Picture"
+                android:textColor="#ffffff"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:typeface="sans"
+                android:gravity="center" />
+
+            <EditText
+                android:hint="Full Name"
+                android:id="@+id/eFullName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:hint="Address"
+                android:id="@+id/eAddress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:hint="Phone Number"
+                android:id="@+id/ePhoneNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:visibility="gone"
+                android:hint="TODA"
+                android:id="@+id/eToda"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:visibility="gone"
+                android:hint="Plate Number"
+                android:id="@+id/ePlateNumber"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:editable="false"
+                android:hint="Email"
+                android:layout_gravity="center"
+                android:id="@+id/eEmail"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
+
+            <EditText
+                android:hint="Password"
+                android:layout_gravity="center"
+                android:id="@+id/mpassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+            <CheckBox
+                android:id="@+id/show_hide_checkbox_1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Show/Hide password"
+                android:textSize="10sp" />
+
+            <EditText
+                android:hint="Confirm Password"
+                android:layout_gravity="center"
+                android:id="@+id/mConfirmPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="textPassword" />
+            <CheckBox
+                android:id="@+id/show_hide_checkbox_2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Show/Hide password"
+                android:textSize="10sp" />
+
+            <ImageView
+                android:visibility="gone"
+                android:id="@+id/img_license"
+                android:layout_marginTop="10dp"
+                android:padding="10dp"
+                android:layout_gravity="center"
+                android:layout_width="match_parent"
+                android:layout_height="125dp"
+                android:src="@drawable/upload_id" />
+
+            <android.support.v7.widget.LinearLayoutCompat
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+                <Button
+                    android:layout_margin="10dp"
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/button2"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@color/green"
+                    android:text="Save"
+                    android:textColor="#ffffff"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:layout_margin="10dp"
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/button3"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorRed"
+                    android:text="Cancel"
+                    android:textColor="#ffffff"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+            </android.support.v7.widget.LinearLayoutCompat>
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

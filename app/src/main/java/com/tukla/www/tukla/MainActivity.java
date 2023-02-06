@@ -1,66 +1,67 @@
 package com.tukla.www.tukla;
 
+import static com.tukla.www.tukla.R.id.map;
+import static com.tukla.www.tukla.R.id.nav_logOut;
+import static com.tukla.www.tukla.R.id.nav_profile;
+
 import android.Manifest;
 import android.app.Activity;
 import android.app.LoaderManager;
-import android.content.Context;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.content.Loader;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
-import android.location.Criteria;
+import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Looper;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.CardView;
-import android.text.TextUtils;
-import android.util.Log;
-import android.util.TypedValue;
-import android.view.View;
-import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Button;
-import android.widget.ImageButton;
-import android.widget.LinearLayout;
+import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.Volley;
+import com.bumptech.glide.Glide;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
-import com.google.android.gms.identity.intents.Address;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.LocationSettingsRequest;
 import com.google.android.gms.location.LocationSettingsResult;
 import com.google.android.gms.location.LocationSettingsStatusCodes;
-import com.google.android.gms.location.SettingsClient;
 import com.google.android.gms.location.places.Place;
 import com.google.android.gms.location.places.PlaceBuffer;
 import com.google.android.gms.location.places.Places;
@@ -69,43 +70,45 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static android.R.attr.x;
-import static android.R.attr.y;
-import static com.google.android.gms.location.LocationServices.FusedLocationApi;
-import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
-import static com.tukla.www.tukla.R.id.map;
-import static com.tukla.www.tukla.R.id.myLocation;
+import de.hdodenhof.circleimageview.CircleImageView;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, LoaderManager.LoaderCallbacks<Object>, GoogleApiClient.ConnectionCallbacks,
         GoogleApiClient.OnConnectionFailedListener,
-        LocationListener {
+        LocationListener, Serializable {
 
-
-
-    RelativeLayout products_select_option;
-    ImageButton select_btn, product1, product2;
+    //RelativeLayout products_select_option;
     Button myCurrentloc,book_button;
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private final static int PERMISSION_MY_LOCATION = 3;
-
 
     private static final int REQUEST_CHECK_SETTINGS = 1000;
     private MapFragment mapFragment;
@@ -121,17 +124,50 @@ public class MainActivity extends AppCompatActivity
 
     Geocoder geocoder;
     List<android.location.Address> addresses;
+    EditText txtDropOff;
+    TextView priceText;
+    TextView distanceText;
+    LatLng myPosition;
+    LatLng positionUpdate;
+    //LatLng targetDestination;
+    private FirebaseAuth mAuth;
+    private final String CODE_BOOK = "Book";
+    private final String CODE_CANCEL = "Cancel";
+    private final String CODE_DRIVER_WAIT = "Waiting Driver";
+    private final String CODE_DRIVER_OK = "Driver Arrived";
+    private final String CODE_SOS = "SOS";
+    private final String CODE_DONE = "Done";
 
-
+    private Boolean isBookClicked = false;
+    String recentBookingID;
+    Marker driverMarker;
+    Marker destinationMarker;
+    Booking myBookingObj;
+    //TextView platenumber_text;
+    //TextView drivername_text;
+    //private String driverName;
+    //private String driverPlateNumber;
+    User loggedInUser;
+    Session thisSession;
+    //CardView driver_info;
+    NavigationView navigationView;
+    // Create a LatLngBounds object for Calamba, Laguna
+    final LatLngBounds calambaBounds = new LatLngBounds(
+            new LatLng(14.139585, 121.036924), // Southwest corner
+            new LatLng(14.241103070741213, 121.19193372793421) // Northeast corner
+    );
+    private Boolean isMapClick;
+    private String txtMyNote;
+    private Boolean isCancelled = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
-
-
+        mAuth = FirebaseAuth.getInstance();
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_main );
 
-
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
 
@@ -139,57 +175,257 @@ public class MainActivity extends AppCompatActivity
                 .findFragmentById( R.id.map );
         mapView = mapFragment.getView();
         mapFragment.getMapAsync( this );
+
         CheckMapPermission();
-
-//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-//        fab.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-//                        .setAction("Action", null).show();
-//
-//
-//            }
-//        });
-
 
         DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close );
         drawer.setDrawerListener( toggle );
         toggle.syncState();
-
-        NavigationView navigationView = (NavigationView) findViewById( R.id.nav_view );
+        navigationView = (NavigationView) findViewById( R.id.nav_view );
         navigationView.setNavigationItemSelectedListener( this );
 
-
+        txtDropOff = (EditText) findViewById(R.id.txt_dropoff);
+        //
         //Buttons Select Product option
-        select_btn = (ImageButton) findViewById( R.id.img_selected );
-        product1 = (ImageButton) findViewById( R.id.product_type_1_button );
-        product2 = (ImageButton) findViewById( R.id.product_type_2_button );
-        products_select_option = (RelativeLayout) findViewById( R.id.products_select_option );
+        //select_btn = (ImageButton) findViewById( R.id.img_selected );
+        //products_select_option = (RelativeLayout) findViewById( R.id.products_select_option );
         myCurrentloc=(Button) findViewById( R.id.myCLocation );
+        priceText = (TextView) findViewById(R.id.price_text);
+        distanceText = (TextView) findViewById(R.id.distance_text);
+        //drivername_text = (TextView) findViewById(R.id.drivername_text);
+        //platenumber_text = (TextView) findViewById(R.id.platenumber_text);
 
         book_button=(Button)findViewById(R.id.book_button);
+        //book_button.setText(CODE_SOS);
         book_button.setOnClickListener(new View.OnClickListener() {
 
             @Override
             public void onClick(View v) {
+
                 // TODO Auto-generated method stub
-                Intent i = new Intent(getApplicationContext(),FindDriver.class);
-                startActivity(i);
+                final ProgressDialog pdialog = ProgressDialog.show(MainActivity.this, "",
+                        "Loggin in. Please wait...", true);
+                try {
+                    if(book_button.getText().toString().equals(CODE_BOOK)) {
+
+                        Address destinationResult = setDestination();
+
+                        if(destinationResult!=null) {
+
+                            showCustomBookDialog(destinationResult.getAddressLine(0));
+
+    //                        waitBookAccept();
+
+                        } else {
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                            builder.setTitle("No location found!");
+                            builder.setMessage("Please enter a location within Calamba, Laguna only.");
+                            AlertDialog dialog = builder.create();
+
+                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Do something when the OK button is clicked
+                                    dialog.dismiss();
+                                }
+                            });
+                            mMap.clear();
+                            txtDropOff.setText("");
+                            dialog.show();
+                        }
+                    } else if(book_button.getText().toString().equals(CODE_CANCEL)){
+                        //driver_info.setVisibility(View.GONE);
+                        isCancelled = false;
+                        isBookClicked = false;
+                        mMap.clear();
+                        book_button.setText(CODE_BOOK);
+                        book_button.setBackgroundColor(getColor(R.color.green));
+                        txtDropOff.setEnabled(true);
+                        txtDropOff.setText("");
+                        priceText.setText("0.00");
+                        distanceText.setText("0");
+                        FirebaseDatabase database = FirebaseDatabase.getInstance();
+                        database.getReference("bookings").child(recentBookingID).removeValue();
+                    } else if (book_button.getText().equals(CODE_CANCEL)) {
+
+                    } else if (book_button.getText().toString().equals(CODE_SOS)) {
+                        // Check if app has permission to make phone calls
+                        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
+                            // Request permission if it does not have it
+                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 123);
+                        } else {
+                            // App has permission, make phone call
+                            Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + "+639322206783"));
+                            startActivity(intent);
+                        }
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(getApplicationContext(),"An error occured! Try selecting another place.",Toast.LENGTH_SHORT);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setTitle("No location found!");
+                    builder.setMessage("Please enter a location within Calamba, Laguna only.");
+                    AlertDialog dialog = builder.create();
+
+                    builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            // Do something when the OK button is clicked
+                            dialog.dismiss();
+                        }
+                    });
+                    mMap.clear();
+                    txtDropOff.setText("");
+                    dialog.show();
+                } finally {
+                    pdialog.dismiss();
+                }
             }
         });
 
-    }
+        txtDropOff.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mMap.clear();
+                txtDropOff.setText("");
+                isMapClick=false;
+            }
+        });
 
+        DatabaseReference mySessionsRef = database.getReference().child("sessions");
+        mySessionsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for(DataSnapshot sessionSnapshot : dataSnapshot.getChildren()) {
+
+                    Session mySession = sessionSnapshot.getValue(Session.class);
+
+                    if(!mySession.isBookingEmpty())
+                        if(mySession.getBooking().getBookingID().equals(recentBookingID)) {
+                        thisSession = mySession;
+                        LatLng positionUpdate = new LatLng(mySession.getDriverLocation().getLatitude(),mySession.getDriverLocation().getLongitude());
+                        driverMarker.remove();
+                        MarkerOptions myMarkerOptions = new MarkerOptions();
+                        myMarkerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_tricycle));
+                        myMarkerOptions.position(positionUpdate);
+                        //myMarkerOptions.title("Driver: "+mySession.getDriver().getFullname()+" | Plate No. "+mySession.getDriver().getDriver().getPlateNumber());
+                        driverMarker = mMap.addMarker(myMarkerOptions);
+                        driverMarker.setTag(mySession.getDriver());
+
+                        CameraUpdate camerUpdate = CameraUpdateFactory.newLatLngZoom( positionUpdate, 20 );
+                        mMap.animateCamera(camerUpdate);
+
+                        Location driverLocation = new Location("");
+                        driverLocation.setLatitude(mySession.getDriverLocation().getLatitude());
+                        driverLocation.setLongitude(mySession.getDriverLocation().getLongitude());
+
+                        Location myCurrLocation = new Location("");
+                        myCurrLocation.setLatitude(myPosition.latitude);
+                        myCurrLocation.setLongitude(myPosition.longitude);
+                        float driverDistance = myCurrLocation.distanceTo(driverLocation);
+
+                        if(mySession.getIsDriverArrived()) {
+                            Location dest = new Location("");
+                            dest.setLatitude(myBookingObj.getDestination().getLatitude());
+                            dest.setLongitude(myBookingObj.getDestination().getLongitude());
+                            driverDistance = myCurrLocation.distanceTo(dest);
+                        } else {
+                            book_button.setText(driverDistance+"m");
+                        }
+
+                        if(driverDistance<=15) {
+                            if (!mySession.getIsDriverArrived()) {
+                                mySessionsRef.child(sessionSnapshot.getKey()).child("isDriverArrived").setValue(true);
+                                book_button.setText(CODE_SOS);
+                                book_button.setBackgroundColor(getColor(R.color.colorRed));
+                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                builder.setTitle("Your Driver is here!");
+                                builder.setMessage("I am about 15 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
+                                AlertDialog dialog = builder.create();
+
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // Do something when the OK button is clicked
+                                        dialog.dismiss();
+                                    }
+                                });
+                                dialog.show();
+
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        database.getReference().child("users").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for (DataSnapshot userSnapshot: dataSnapshot.getChildren()) {
+                    if(userSnapshot.getKey().equals(mAuth.getUid())) {
+                        loggedInUser = userSnapshot.getValue(User.class);
+                        Log.d("SAVED USER OBJECT TAG",loggedInUser.toString());
+                        break;
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
 
     @Override
     protected void onStart() {
         super.onStart();
         googleApiClient.connect();
         //mGoogleApiClient.connect();
+        /** setup drawer **/
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
 
+        View navHeader = navigationView.getHeaderView(0);
+        CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
+
+        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+        StorageReference imgRef = storageRef.child("images/"+mAuth.getUid()+".jpg");
+        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                Glide.with(profImg.getContext())
+                        .load(uri)
+                        .fitCenter()
+                        .into(profImg);
+            }
+        });
+
+        database.getReference("users").child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                User user = dataSnapshot.getValue(User.class);
+                TextView txtViewName = navHeader.findViewById(R.id.textView2);
+                txtViewName.setText(user.getFullname());
+
+                TextView txtViewEmail = navHeader.findViewById(R.id.textView);
+                txtViewEmail.setText(mAuth.getCurrentUser().getEmail());
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+        /** */
     }
 
 
@@ -200,6 +436,30 @@ public class MainActivity extends AppCompatActivity
             drawer.closeDrawer( GravityCompat.START );
         } else {
             super.onBackPressed();
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+            builder.setTitle("Sign out?");
+            builder.setMessage("You have pressed back button. Are you signing out?");
+            AlertDialog dialog = builder.create();
+
+            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Do something when the OK button is clicked
+                    dialog.dismiss();
+                    FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
+                    Intent intent =new Intent(MainActivity.this,Login.class);
+                    finish();
+                    startActivity(intent);
+                }
+            });
+
+            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
         }
     }
 
@@ -231,7 +491,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -245,7 +504,6 @@ public class MainActivity extends AppCompatActivity
             googleApiClient.disconnect();
         }
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -275,25 +533,33 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
+        if(isBookClicked)
+            FirebaseDatabase.getInstance().getReference().child("bookings").child(recentBookingID).removeValue();
 
-        } else if (id == R.id.nav_slideshow) {
+        if(id==R.id.nav_history) {
+            //FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
+            Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
+            intent.putExtra("ROLE","PASSENGER");
+            startActivity(intent);
+            finish();
+        } else if(id==nav_logOut) {
+            //FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
 
-        } else if (id == R.id.nav_manage) {
+            //FirebaseAuth.getInstance().signOut();
 
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+            Intent intent = new Intent(MainActivity.this, Login.class);
+            startActivity(intent);
+            finish();
+        } else if(id==nav_profile) {
+            //FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
+            Intent intent = new Intent(this, ProfileActivity.class);
+            startActivity(intent);
+            finish();
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
         drawer.closeDrawer( GravityCompat.START );
         return true;
-
-
     }
 
     @Override
@@ -325,19 +591,35 @@ public class MainActivity extends AppCompatActivity
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
+        driverMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(50,20)));
 
         //This line will show your current location on Map with GPS dot
         mMap.setMyLocationEnabled( true );
         locationButton();
-/*
-        Toast.makeText( MainActivity.this, "OnStart:"+latitude+","+longitude, Toast.LENGTH_SHORT ).show();
-*/
 
+        mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
+            @Override
+            public void onMapClick(LatLng latLng) {
+                isMapClick=true;
+                if(book_button.getText().toString().equals(CODE_BOOK)) {
+                    try {
+                        mMap.clear();
+                        List<Address> addressList = geocoder.getFromLocation(latLng.latitude,latLng.longitude,1);
+                        txtDropOff.setText(addressList.get(0).getAddressLine(0));
 
+                        positionUpdate = new LatLng( latLng.latitude,latLng.longitude );
+                        CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 20 );
+                        destinationMarker = mMap.addMarker(new MarkerOptions().position(positionUpdate).icon(BitmapDescriptorFactory.fromResource(R.drawable.finish_flag)));
+                        mMap.animateCamera( update );
 
-
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        txtDropOff.setText("");
+                    }
+                }
+            }
+        });
     }
-
 
     private void setupLocationManager() {
         //buildGoogleApiClient();
@@ -355,7 +637,6 @@ public class MainActivity extends AppCompatActivity
         googleApiClient.connect();
         createLocationRequest();
     }
-
 
     protected void createLocationRequest() {
 
@@ -409,8 +690,6 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         Log.d( "onActivityResult()", Integer.toString( resultCode ) );
@@ -440,8 +719,6 @@ public class MainActivity extends AppCompatActivity
                 break;
         }
     }
-
-
 
     private void setInitialLocation() {
 
@@ -473,8 +750,8 @@ public class MainActivity extends AppCompatActivity
                     }
                     LatLng positionUpdate = new LatLng( MainActivity.this.latitude,MainActivity.this.longitude );
                     CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
-                    now=mMap.addMarker(new MarkerOptions().position(positionUpdate)
-                            .title("Your Location"));
+                    //now=mMap.addMarker(new MarkerOptions().position(positionUpdate)
+                      //      .title("Your Location"));
 
                     mMap.animateCamera( update );
                     //myCurrentloc.setText( ""+latitude );
@@ -507,8 +784,8 @@ public class MainActivity extends AppCompatActivity
                        // str.append( zipcode ).append( "" );
 
                         myCurrentloc.setText(str);
-                        Toast.makeText(getApplicationContext(), str,
-                                Toast.LENGTH_SHORT).show();
+//                        Toast.makeText(getApplicationContext(), str,
+//                                Toast.LENGTH_SHORT).show();
 
                     } else {
                     /*    Toast.makeText(getApplicationContext(),
@@ -532,10 +809,6 @@ public class MainActivity extends AppCompatActivity
         } );
     }
 
-    private void updateCamera(){
-
-    }
-
     private void CheckMapPermission() {
 
 
@@ -553,7 +826,6 @@ public class MainActivity extends AppCompatActivity
         }
 
     }
-
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -583,7 +855,6 @@ public class MainActivity extends AppCompatActivity
         }
 
     }
-
 
     public void getLatLang(String placeId) {
         Places.GeoDataApi.getPlaceById( googleApiClient, placeId )
@@ -617,7 +888,6 @@ public class MainActivity extends AppCompatActivity
                 } );
     }
 
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         //AlertMessageNoGps();
@@ -642,12 +912,10 @@ public class MainActivity extends AppCompatActivity
 
     }
 
-
     @Override
     public void onPointerCaptureChanged(boolean hasCapture) {
 
     }
-
 
     @Override
     public Loader<Object> onCreateLoader(int i, Bundle bundle) {
@@ -663,7 +931,6 @@ public class MainActivity extends AppCompatActivity
     public void onLoaderReset(Loader<Object> loader) {
 
     }
-
 
     //GET CURRENT LOCATION BUTTON POSITION....
     private void locationButton() {
@@ -694,50 +961,6 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    //Button Location Search
-    public void myLocation(View view) {
-
-        //CHANGE ACTIVITY
-        Intent intent = new Intent( MainActivity.this, LocationAutoActivity.class );
-        startActivity( intent );
-
-
-    }
-
-
-    public void destination(View view) {
-       Intent intent = new Intent( MainActivity.this, LocationAutoActivity.class );
-        startActivity( intent );
-
-    }
-
-
-    //Select product option button click
-    public void img_selected(View view) {
-
-        products_select_option.setVisibility( View.VISIBLE );
-
-    }
-
-    //Select product option button click
-    public void product_type_1_button(View view) {
-        products_select_option.setVisibility( View.GONE );
-
-    }
-
-    //Select product option button click
-    public void product_type_2_button(View view) {
-        products_select_option.setVisibility( View.GONE );
-
-    }
-
-    //Enable Location Button
-    private void checkLocaionStatus() {
-
-
-    }
-
-
 
     protected void buildAlertMessageNoGps() {
 
@@ -759,6 +982,307 @@ public class MainActivity extends AppCompatActivity
         alert.show();
     }
 
+    private Address setDestination() {
+
+        try {
+            List<Address> addresses = new ArrayList<>();
+           // addressList = geocoder.getFromLocationName(paramLocString,1);
+            if(isMapClick) {
+                addresses = geocoder.getFromLocation(destinationMarker.getPosition().latitude,destinationMarker.getPosition().longitude,1);
+                //return addresses.get(0);
+            } else if(!txtDropOff.getText().toString().equals("")) {
+                addresses = geocoder.getFromLocationName(txtDropOff.getText().toString(),10);
+                positionUpdate= new LatLng(addresses.get(0).getLatitude(),addresses.get(0).getLongitude());
+                //return addresses.get(0);
+            }
+            for (Address address : addresses) {
+                LatLng location = new LatLng(address.getLatitude(), address.getLongitude());
+                if (calambaBounds.contains(location)) {
+                    return address;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return null;
+    }
+
+    private String getDirectionsUrl(LatLng origin, LatLng dest) {
+        // Origin of route
+        String str_origin = "origin=" + origin.latitude + "," + origin.longitude;
+
+        // Destination of route
+        String str_dest = "destination=" + dest.latitude + "," + dest.longitude;
+
+        // Sensor enabled
+        String sensor = "sensor=false";
+
+        // Building the parameters to the web service
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyBJfB6BWBgpsU-_EBtsZ3SiuYUDhz0sJJE";
+
+        // Output format
+        String output = "json";
+
+        // Building the url to the web service
+        String url = "https://maps.googleapis.com/maps/api/directions/" + output + "?" + parameters;
+        return url;
+    }
+
+    private double displayFare(double distance) {
+
+        double fare = 0.00;
+        double distanceKm = distance/1000;
+        if(distanceKm<3) {
+            fare = 60.00;
+        } else {
+            int extraDistance = (int) (distanceKm - 2);
+            fare = ((extraDistance*8)+60);
+        }
+
+        distanceText.setText(distanceKm+"");
+        priceText.setText(fare+"");
+        updateFirebase(fare,distanceKm);
+        return fare;
+    }
+
+    private void updateFirebase(double paramFare, double paramDistance) {
+        FirebaseDatabase database=FirebaseDatabase.getInstance();
+        DatabaseReference myBookingsRef = database.getReference().child("bookings");
+        recentBookingID = myBookingsRef.push().getKey();
+        isBookClicked = true;
+        LatLngDefined l1 = new LatLngDefined(myPosition.latitude,myPosition.longitude);
+        LatLngDefined l2 = new LatLngDefined(positionUpdate.latitude,positionUpdate.longitude);
+        myBookingObj = new Booking(recentBookingID,loggedInUser, null,LocalDateTime.now().toString(),l1,l2,false,false, paramFare, paramDistance,myCurrentloc.getText().toString(),txtDropOff.getText().toString(),txtMyNote,false,false);
+        myBookingsRef.child(recentBookingID).setValue(myBookingObj);
+
+        myBookingsRef.child(recentBookingID).addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    Booking booking = dataSnapshot.getValue(Booking.class);
+                    myBookingObj = booking;
+                    if(booking.getIsCancelled() && !isCancelled) {
+                        isCancelled = true;
+                        Toast.makeText(getBaseContext(), "Driver cancelled your booking, please book again.", Toast.LENGTH_SHORT).show();
+                        //isBookClicked = false;
+                        //mMap.clear();
+                        book_button.setText(CODE_CANCEL);
+                        book_button.setBackgroundColor(getColor(R.color.colorRed));
+                        driverMarker.remove();
+                        //txtDropOff.setEnabled(true);
+                        //txtDropOff.setText("");
+                        //priceText.setText("0.00");
+                        //distanceText.setText("0");
+
+                        CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
+                        mMap.animateCamera(update);
+
+                    } else if(booking.getIsAccepted() && !booking.getIsArrived()) {
+                        //book_button.setText(CODE_DRIVER_WAIT);
+                        isCancelled = false;
+                        book_button.setBackgroundColor(getColor(R.color.blue));
+                        Toast.makeText(getBaseContext(), "Driver accepted your booking, please wait", Toast.LENGTH_SHORT).show();
+
+                        database.getReference("sessions").child(booking.getBookingID()).addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+
+                                if(dataSnapshot.exists()) {
+                                    Session sessionx = dataSnapshot.getValue(Session.class);
+                                    if(!sessionx.isBookingEmpty()) {
+                                        showCustomDialog(sessionx);
+                                    }
+                                }
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                            }
+                        });
+                    } else if(booking.getIsAccepted() && booking.getIsArrived()) {
+                        //priceText.setText(0);
+                        //distanceText.setText(0);
+                        //mMap.clear();
+                        //txtDropOff.setText("");
+                        //book_button.setText(CODE_BOOK);
+                        //book_button.setBackgroundColor(getColor(R.color.green));
+                        Intent intent = new Intent( MainActivity.this, DoneActivity.class );
+
+                        intent.putExtra("BOOKING_ID", booking.getBookingID());
+                        intent.putExtra("ROLE","PASSENGER");
+                        finish();
+                        startActivity( intent );
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    private void showCustomDialog(Session mb) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.marker_custom_window, null);
+
+        CircleImageView profImg = dialogView.findViewById(R.id.marker_img);
+
+        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+        StorageReference imgRef = storageRef.child("images/" + mb.getDriver().getUserID() + ".jpg");
+        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+            @Override
+            public void onSuccess(Uri uri) {
+                Glide.with(profImg.getContext())
+                        .load(uri)
+                        .fitCenter()
+                        .into(profImg);
+            }
+        });
+
+        dialogView.findViewById(R.id.for_driver_layout).setVisibility(View.VISIBLE);
+
+        dialogView.findViewById(R.id.txt_driver_found).setVisibility(View.VISIBLE);
+        TextView name = dialogView.findViewById(R.id.marker_name);
+        name.setText(mb.getDriver().getFullname());
+
+        TextView phone = dialogView.findViewById(R.id.marker_phone_number);
+        phone.setText(mb.getDriver().getPhone());
+
+        TextView plateNum = dialogView.findViewById(R.id.marker_plate);
+        plateNum.setText(mb.getDriver().getDriver().getPlateNumber());
+
+        TextView note = dialogView.findViewById(R.id.txtPassengerNote);
+        note.setText(mb.getBooking().getNote());
+
+        Button button = dialogView.findViewById(R.id.marker_btn_accept);
+
+        builder.setView(dialogView);
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle button click event
+                dialog.dismiss();
+            }
+        });
+
+    }
 
 
+    private void showCustomBookDialog(String myDestination) {
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.add_note, null);
+
+        EditText note = dialogView.findViewById(R.id.txtNote);
+        Button button = dialogView.findViewById(R.id.customBtnBook);
+        Button button2 = dialogView.findViewById(R.id.customBtnCancel);
+
+        builder.setView(dialogView);
+        final AlertDialog dialog = builder.create();
+        dialog.show();
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                dialog.dismiss();
+                txtMyNote = note.getText().toString();
+                mMap.clear();
+                book_button.setText(CODE_CANCEL);
+                book_button.setBackgroundColor(getColor(R.color.colorRed));
+
+                txtDropOff.setText(myDestination);
+                txtDropOff.setEnabled(false);
+                myPosition = new LatLng(MainActivity.this.latitude,MainActivity.this.longitude);
+
+                //positionUpdate = new LatLng( destinationResult.getLatitude(), destinationResult.getLongitude() );
+                String directionUrl = getDirectionsUrl(myPosition,positionUpdate);
+
+                //AsyncDirectionsAPI asyncDirectionsAPI = new AsyncDirectionsAPI();
+                //asyncDirectionsAPI.execute(directionUrl);
+
+                //double distanceVal = 2;
+                // creating a new variable for our request queue
+                RequestQueue queue = Volley.newRequestQueue(MainActivity.this);
+                JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, directionUrl, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            double distanceVal = 0;
+                            // now we get our response from API in json object format.
+                            // in below line we are extracting a string with its key
+                            // value from our json object.
+                            // similarly we are extracting all the strings from our json object.
+
+                            JSONArray routesObjArray = response.getJSONArray("routes");
+                            JSONObject distanceObj = routesObjArray.getJSONObject(0);
+
+                            JSONArray c = distanceObj.getJSONArray("legs");
+                            for (int i = 0 ; i < distanceObj.length(); i++) {
+                                JSONObject obj = c.getJSONObject(i);
+                                JSONObject distanceFinal =  obj.getJSONObject("distance");
+                                distanceVal = distanceFinal.getDouble("value");
+                                break;
+                            }
+
+                            displayFare(distanceVal);
+                        } catch (JSONException e) {
+                            // if we do not extract data from json object properly.
+                            // below line of code is use to handle json exception
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    // this is the error listener method which
+                    // we will call if we get any error from API.
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // below line is use to display a toast message along with our error.
+                        //Toast.makeText(MainActivity.this, "Fail to get data..", Toast.LENGTH_SHORT).show();
+                        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setTitle("No location found!");
+                        builder.setMessage("Please enter a location within Calamba, Laguna only.");
+                        AlertDialog dialog = builder.create();
+
+                        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                // Do something when the OK button is clicked
+                                dialog.dismiss();
+                            }
+                        });
+                    }
+                });
+                // at last we are adding our json
+                // object request to our request
+                // queue to fetch all the json data.
+                queue.add(jsonObjectRequest);
+
+                destinationMarker = mMap.addMarker(new MarkerOptions().position(positionUpdate)
+                        .title("Destination")
+                        .icon(BitmapDescriptorFactory.fromResource(R.drawable.finish_flag))
+                );
+
+                CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
+                mMap.animateCamera(update);
+            }
+        });
+
+        button2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Handle button click event
+                book_button.setText(CODE_BOOK);
+                dialog.dismiss();
+            }
+        });
+
+    }
 }
