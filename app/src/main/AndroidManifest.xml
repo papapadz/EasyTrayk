@@ -38,6 +38,9 @@
             android:name=".AdminActivity"
             android:exported="true" />
         <activity
+            android:name=".AdminHistory"
+            android:exported="true" />
+        <activity
             android:name=".DriverActivity"
             android:exported="true" />
         <activity

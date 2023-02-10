@@ -20,6 +20,11 @@
             android:icon="@drawable/check_box"
             android:title="For verification" />
 
+        <item
+            android:id="@+id/nav_history"
+            android:icon="@drawable/ic_history_black_48dp"
+            android:title="History" />
+
     </group>
 
     <item android:title="Settings">

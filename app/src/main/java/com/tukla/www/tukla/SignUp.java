@@ -145,6 +145,11 @@ public class SignUp extends AppCompatActivity {
                 ePhoneNumber.requestFocus();
                 ePhoneNumber.setError("Phone Number cannot be empty");
             }
+            else if(ePhoneNumber.getText().toString().length()>11)
+            {
+                ePhoneNumber.requestFocus();
+                ePhoneNumber.setError("Phone Number must be 11 numbers long only");
+            }
             else if(!email.contains("@"))
             {
                 email_id.requestFocus();

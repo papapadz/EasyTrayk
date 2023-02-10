@@ -71,7 +71,7 @@ public class HistoryListAdapter extends BaseAdapter {
         FirebaseDatabase.getInstance().getReference("feedbacks").child(data.getSession().getBooking().getBookingID()).child("feedback").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                historyFeedback.setText(dataSnapshot.getValue(String.class));
+                historyFeedback.setText("Feedback: " + dataSnapshot.getValue(String.class));
             }
 
             @Override
@@ -83,11 +83,15 @@ public class HistoryListAdapter extends BaseAdapter {
         if(data.getSession().getDriver().getUserID().equals(mAuth.getUid())) {
             historyFeedback.setVisibility(View.VISIBLE);
             historyName.setText("Passenger: "+data.getSession().getBooking().getUser().getFullname());
-        } else
+            historyFare.setText(" PHP "+data.getFare());
+        } else if(data.getSession().getBooking().getUser().getUserID().equals(mAuth.getUid())) {
             historyName.setText("Driver: "+data.getSession().getDriver().getFullname());
-
-        historyFare.setText(" PHP "+data.getFare());
-
+            historyFare.setText(" PHP "+data.getFare());
+        } else {
+            historyFare.setText("");
+            historyFeedback.setVisibility(View.VISIBLE);
+            historyName.setText("Passenger: "+data.getSession().getBooking().getUser().getFullname() + "\n" + "Driver: "+data.getSession().getDriver().getFullname() + "\n" + "Fare: PHP "+data.getFare());
+        }
         return convertView;
     }
 }

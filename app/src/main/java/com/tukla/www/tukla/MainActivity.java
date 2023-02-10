@@ -94,6 +94,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
@@ -110,7 +111,7 @@ public class MainActivity extends AppCompatActivity
     private static final String TAG = MainActivity.class.getSimpleName();
     private final static int PERMISSION_MY_LOCATION = 3;
 
-    private static final int REQUEST_CHECK_SETTINGS = 1000;
+    private static final int REQUEST_CHECK_SETTINGS = 5000;
     private MapFragment mapFragment;
     private GoogleMap mMap;
     private GoogleApiClient googleApiClient;
@@ -159,6 +160,7 @@ public class MainActivity extends AppCompatActivity
     private Boolean isMapClick;
     private String txtMyNote;
     private Boolean isCancelled = false;
+    private int isNotified = 0;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
@@ -237,19 +239,7 @@ public class MainActivity extends AppCompatActivity
                         }
                     } else if(book_button.getText().toString().equals(CODE_CANCEL)){
                         //driver_info.setVisibility(View.GONE);
-                        isCancelled = false;
-                        isBookClicked = false;
-                        mMap.clear();
-                        book_button.setText(CODE_BOOK);
-                        book_button.setBackgroundColor(getColor(R.color.green));
-                        txtDropOff.setEnabled(true);
-                        txtDropOff.setText("");
-                        priceText.setText("0.00");
-                        distanceText.setText("0");
-                        FirebaseDatabase database = FirebaseDatabase.getInstance();
-                        database.getReference("bookings").child(recentBookingID).removeValue();
-                    } else if (book_button.getText().equals(CODE_CANCEL)) {
-
+                        cancelBook();
                     } else if (book_button.getText().toString().equals(CODE_SOS)) {
                         // Check if app has permission to make phone calls
                         if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
@@ -302,7 +292,7 @@ public class MainActivity extends AppCompatActivity
                     Session mySession = sessionSnapshot.getValue(Session.class);
 
                     if(!mySession.isBookingEmpty())
-                        if(mySession.getBooking().getBookingID().equals(recentBookingID)) {
+                        if(mySession.getBooking().getBookingID().equals(recentBookingID) && mySession.getIsAccepted()) {
                         thisSession = mySession;
                         LatLng positionUpdate = new LatLng(mySession.getDriverLocation().getLatitude(),mySession.getDriverLocation().getLongitude());
                         driverMarker.remove();
@@ -323,37 +313,50 @@ public class MainActivity extends AppCompatActivity
                         Location myCurrLocation = new Location("");
                         myCurrLocation.setLatitude(myPosition.latitude);
                         myCurrLocation.setLongitude(myPosition.longitude);
-                        float driverDistance = myCurrLocation.distanceTo(driverLocation);
+//                        float driverDistance = myCurrLocation.distanceTo(driverLocation);
+//                        if(mySession.getIsDriverArrived()) {
+//                            //Location dest = new Location("");
+//                            //dest.setLatitude(myBookingObj.getDestination().getLatitude());
+//                            //dest.setLongitude(myBookingObj.getDestination().getLongitude());
+//                            //driverDistance = myCurrLocation.distanceTo(dest);
+//                        } else {
+//                            //book_button.setText(driverDistance+"m");
+//                        }
 
-                        if(mySession.getIsDriverArrived()) {
-                            Location dest = new Location("");
-                            dest.setLatitude(myBookingObj.getDestination().getLatitude());
-                            dest.setLongitude(myBookingObj.getDestination().getLongitude());
-                            driverDistance = myCurrLocation.distanceTo(dest);
-                        } else {
-                            book_button.setText(driverDistance+"m");
-                        }
 
-                        if(driverDistance<=15) {
-                            if (!mySession.getIsDriverArrived()) {
-                                mySessionsRef.child(sessionSnapshot.getKey()).child("isDriverArrived").setValue(true);
-                                book_button.setText(CODE_SOS);
-                                book_button.setBackgroundColor(getColor(R.color.colorRed));
-                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                                builder.setTitle("Your Driver is here!");
-                                builder.setMessage("I am about 15 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
-                                AlertDialog dialog = builder.create();
+                        if(mySession.getIs500meters() && !mySession.getIsDriverArrived() && isNotified==0) {
+                            isNotified=1;
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                            builder.setTitle("Your Driver is near!");
+                            builder.setMessage("I am 500 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
+                            AlertDialog dialog = builder.create();
 
-                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                    @Override
-                                    public void onClick(DialogInterface dialog, int which) {
-                                        // Do something when the OK button is clicked
-                                        dialog.dismiss();
-                                    }
-                                });
-                                dialog.show();
+                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Do something when the OK button is clicked
+                                    dialog.dismiss();
+                                }
+                            });
+                            dialog.show();
+                        } else if(mySession.getIs50meters() && !mySession.getIsDriverArrived() && isNotified==1) {
+                            isNotified=2;
+                            mySessionsRef.child(sessionSnapshot.getKey()).child("isDriverArrived").setValue(true);
+                            book_button.setText(CODE_SOS);
+                            book_button.setBackgroundColor(getColor(R.color.colorRed));
+                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                            builder.setTitle("Your Driver is almost there!");
+                            builder.setMessage("I am 50 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
+                            AlertDialog dialog = builder.create();
 
-                            }
+                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    // Do something when the OK button is clicked
+                                    dialog.dismiss();
+                                }
+                            });
+                            dialog.show();
                         }
                         break;
                     }
@@ -535,8 +538,11 @@ public class MainActivity extends AppCompatActivity
 
         if(isBookClicked)
             FirebaseDatabase.getInstance().getReference().child("bookings").child(recentBookingID).removeValue();
-
-        if(id==R.id.nav_history) {
+        if(id==R.id.nav_book) {
+            Intent intent = new Intent(MainActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        } else if(id==R.id.nav_history) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
             Intent intent = new Intent(MainActivity.this, HistoryActivity.class);
             intent.putExtra("ROLE","PASSENGER");
@@ -1049,7 +1055,9 @@ public class MainActivity extends AppCompatActivity
     private void updateFirebase(double paramFare, double paramDistance) {
         FirebaseDatabase database=FirebaseDatabase.getInstance();
         DatabaseReference myBookingsRef = database.getReference().child("bookings");
-        recentBookingID = myBookingsRef.push().getKey();
+        if(!isCancelled)
+            recentBookingID = myBookingsRef.push().getKey();
+        isCancelled = false;
         isBookClicked = true;
         LatLngDefined l1 = new LatLngDefined(myPosition.latitude,myPosition.longitude);
         LatLngDefined l2 = new LatLngDefined(positionUpdate.latitude,positionUpdate.longitude);
@@ -1064,25 +1072,20 @@ public class MainActivity extends AppCompatActivity
                     myBookingObj = booking;
                     if(booking.getIsCancelled() && !isCancelled) {
                         isCancelled = true;
-                        Toast.makeText(getBaseContext(), "Driver cancelled your booking, please book again.", Toast.LENGTH_SHORT).show();
-                        //isBookClicked = false;
-                        //mMap.clear();
-                        book_button.setText(CODE_CANCEL);
-                        book_button.setBackgroundColor(getColor(R.color.colorRed));
-                        driverMarker.remove();
+                        Toast.makeText(getBaseContext(), "You have cancelled your booking, please book again.", Toast.LENGTH_SHORT).show();
+                        isBookClicked = false;
+                        //book_button.setText(CODE_CANCEL);
+                        //book_button.setBackgroundColor(getColor(R.color.colorRed));
+                        //driverMarker.remove();
                         //txtDropOff.setEnabled(true);
                         //txtDropOff.setText("");
                         //priceText.setText("0.00");
                         //distanceText.setText("0");
-
-                        CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
-                        mMap.animateCamera(update);
-
                     } else if(booking.getIsAccepted() && !booking.getIsArrived()) {
                         //book_button.setText(CODE_DRIVER_WAIT);
                         isCancelled = false;
-                        book_button.setBackgroundColor(getColor(R.color.blue));
-                        Toast.makeText(getBaseContext(), "Driver accepted your booking, please wait", Toast.LENGTH_SHORT).show();
+                        book_button.setBackgroundColor(getColor(R.color.colorRed));
+                        Toast.makeText(getBaseContext(), "Driver found! Click Accept or Reject.", Toast.LENGTH_SHORT).show();
 
                         database.getReference("sessions").child(booking.getBookingID()).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
@@ -1090,7 +1093,7 @@ public class MainActivity extends AppCompatActivity
 
                                 if(dataSnapshot.exists()) {
                                     Session sessionx = dataSnapshot.getValue(Session.class);
-                                    if(!sessionx.isBookingEmpty()) {
+                                    if(!sessionx.isBookingEmpty() && !sessionx.getIsAccepted()) {
                                         showCustomDialog(sessionx);
                                     }
                                 }
@@ -1160,6 +1163,11 @@ public class MainActivity extends AppCompatActivity
         note.setText(mb.getBooking().getNote());
 
         Button button = dialogView.findViewById(R.id.marker_btn_accept);
+        Button buttonCancel = dialogView.findViewById(R.id.marker_btn_cancel);
+
+        button.setText("Accept");
+        buttonCancel.setText("Reject");
+        buttonCancel.setVisibility(View.VISIBLE);
 
         builder.setView(dialogView);
         final AlertDialog dialog = builder.create();
@@ -1169,6 +1177,15 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 // Handle button click event
+                FirebaseDatabase.getInstance().getReference().child("sessions").child(recentBookingID).child("isAccepted").setValue(true);
+                dialog.dismiss();
+            }
+        });
+
+        buttonCancel.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                cancelBook();
                 dialog.dismiss();
             }
         });
@@ -1279,10 +1296,31 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 // Handle button click event
+                cancelBook();
                 book_button.setText(CODE_BOOK);
                 dialog.dismiss();
             }
         });
+    }
 
+    private void cancelBook() {
+        //isCancelled = false;
+        //isBookClicked = false;
+        mMap.clear();
+        book_button.setText(CODE_BOOK);
+        book_button.setBackgroundColor(getColor(R.color.green));
+        txtDropOff.setEnabled(true);
+        txtDropOff.setText("");
+        priceText.setText("0.00");
+        distanceText.setText("0");
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        //database.getReference("bookings").child(recentBookingID).removeValue();
+        HashMap<String, Object> myUpdates =  new HashMap();
+        myUpdates.put("isClicked", false);
+        myUpdates.put("isAccepted", false);
+        myUpdates.put("isCancelled",true);
+        database.getReference("bookings").child(recentBookingID).updateChildren(myUpdates);
+        CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(MainActivity.this.latitude,MainActivity.this.longitude) , 15 );
+        mMap.animateCamera(update);
     }
 }

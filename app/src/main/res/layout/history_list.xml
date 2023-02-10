@@ -144,12 +144,12 @@
 
 
                         <TextView
-                            android:visibility="gone"
                             android:id="@+id/list_history_feedback"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:text="ASDASDASD"
-                            android:textSize="13sp" />
+                            android:textSize="13sp"
+                            android:visibility="gone" />
 
                     </LinearLayout>
 

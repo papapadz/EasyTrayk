@@ -174,6 +174,11 @@ public class SignUpDriver extends AppCompatActivity {
                 ePhoneNumber.requestFocus();
                 ePhoneNumber.setError("Phone Number cannot be empty");
             }
+            else if(ePhoneNumber.getText().toString().length()>11)
+            {
+                ePhoneNumber.requestFocus();
+                ePhoneNumber.setError("Phone Number must be 11 numbers long only");
+            }
             else if(eToda.getText().toString().equals(""))
             {
                 eToda.requestFocus();

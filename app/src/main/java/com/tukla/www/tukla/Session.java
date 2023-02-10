@@ -14,12 +14,15 @@ public class Session {
     private Boolean isDriverArrived;
     private Boolean isDone;
     private Boolean isCancelled;
+    private Boolean is500meters;
+    private Boolean is50meters;
+    private Boolean isAccepted;
 
     public Session() {
 
     }
 
-    public Session(User driver, Booking booking, String startedAt, LatLngDefined driverLocation, Boolean isDriverArrived, Boolean isDone, Boolean isCancelled) {
+    public Session(User driver, Booking booking, String startedAt, LatLngDefined driverLocation, Boolean isDriverArrived, Boolean isDone, Boolean isCancelled, Boolean is500meters, Boolean is50meters, Boolean isAccepted) {
         this.driver = driver;
         this.booking = booking;
         this.startedAt = startedAt;
@@ -27,6 +30,9 @@ public class Session {
         this.isDriverArrived = isDriverArrived;
         this.isDone = isDone;
         this.isCancelled = isCancelled;
+        this.is500meters = is500meters;
+        this.is50meters = is50meters;
+        this.isAccepted = isAccepted;
     }
 
     public User getDriver() {
@@ -63,5 +69,17 @@ public class Session {
 
     public boolean getIsCancelled() {
         return isCancelled;
+    }
+
+    public Boolean getIs500meters() {
+        return is500meters;
+    }
+
+    public Boolean getIs50meters() {
+        return is50meters;
+    }
+
+    public Boolean getIsAccepted() {
+        return isAccepted;
     }
 }

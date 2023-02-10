@@ -7,6 +7,7 @@ import static com.tukla.www.tukla.R.id.nav_profile;
 import android.Manifest;
 import android.app.Activity;
 import android.app.LoaderManager;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -18,6 +19,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -68,6 +70,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
@@ -78,8 +81,15 @@ import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -138,10 +148,21 @@ public class DriverActivity extends AppCompatActivity
     Session thisSession;
     NavigationView navigationView;
     Boolean isAccepted = false;
+    Boolean isPassengerGot = false;
+    Boolean isPassengerAccept = false;
+    AlertDialog.Builder waitBuilder;
+    AlertDialog waitDialog;
+    AlertDialog PassengerDialog;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
         mAuth = FirebaseAuth.getInstance();
+
+        waitBuilder = new AlertDialog.Builder(DriverActivity.this);
+        waitBuilder.setTitle("Please wait...");
+        waitBuilder.setMessage("Waiting for passenger to accept this booking.");
+        waitDialog = waitBuilder.create();
 
         hashMapBookings = new HashMap<>();
         super.onCreate( savedInstanceState );
@@ -198,17 +219,14 @@ public class DriverActivity extends AppCompatActivity
                     intent.putExtra("ROLE","DRIVER");
                     startActivity( intent );
                 } else if(book_button.getText().toString().equals(CODE_CANCEL)) {
+                    Toast.makeText(getBaseContext(), "Passenger just cancelled your this booking, find again.", Toast.LENGTH_SHORT).show();
+
                     mMap.clear();
                     layoutDetails.setVisibility(View.GONE);
 
                     DatabaseReference sessionsRef = database.getReference("sessions");
                     sessionsRef.child(sessionID).child("isCancelled").setValue(true);
 
-                    HashMap<String, Object> driverUpdates =  new HashMap();
-                    driverUpdates.put("isClicked", false);
-                    driverUpdates.put("isAccepted", false);
-                    driverUpdates.put("isCancelled",true);
-                    database.getReference("bookings").child(clickedBookingID).updateChildren(driverUpdates);
                     clickedBookingID = null;
                     isAccepted=false;
 
@@ -528,7 +546,8 @@ public class DriverActivity extends AppCompatActivity
                 Booking booking = (Booking) marker.getTag();
                 Log.d("MARKER TAG", booking.toString());
 
-                FirebaseDatabase.getInstance().getReference().child("bookings").child(booking.getBookingID()).child("isClicked").setValue(true);
+                if(!isAccepted)
+                    FirebaseDatabase.getInstance().getReference().child("bookings").child(booking.getBookingID()).child("isClicked").setValue(true);
 
                 if(book_button.getText().toString().equals(CODE_DONE)) {
                     mMap.clear();
@@ -566,6 +585,7 @@ public class DriverActivity extends AppCompatActivity
 
                 //Toast.makeText(getApplicationContext(), marker.getTitle(), Toast.LENGTH_SHORT).show();
                 showCustomDialog(booking);
+
                 return false;
             }
         });
@@ -576,13 +596,30 @@ public class DriverActivity extends AppCompatActivity
         mMap.setOnMyLocationChangeListener(new GoogleMap.OnMyLocationChangeListener() {
             @Override
             public void onMyLocationChange(Location location) {
+                DriverActivity.this.latitude=location.getLatitude();
+                DriverActivity.this.longitude=location.getLongitude();
                 FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-                DatabaseReference sessionsReference = firebaseDatabase.getReference("sessions");
+                DatabaseReference sessionsReference = firebaseDatabase.getReference().child("sessions");
                 if(sessionID!=null) {
-                    sessionsReference.child(sessionID).child("driverLocation").setValue(new LatLngDefined(location.getLatitude(),location.getLongitude()));
+                    HashMap<String, Object> driverUpdates = new HashMap<>();
+                    driverUpdates.put("driverLocation",new LatLngDefined(location.getLatitude(),location.getLongitude()));
+
                     Location passengerLoc = new Location("");
-                    passengerLoc.setLatitude(targetDestination.latitude);
-                    passengerLoc.setLongitude(targetDestination.latitude);
+                    passengerLoc.setLatitude(passengerMarker.getPosition().latitude);
+                    passengerLoc.setLongitude(passengerMarker.getPosition().longitude);
+                    float driverDistance = location.distanceTo(passengerLoc);
+
+                    if(!isPassengerGot) {
+                        book_button.setText(String.format(java.util.Locale.US,"%.2f meters", driverDistance));
+                    }
+                    if(driverDistance<=50) {
+                        isPassengerGot = true;
+                        driverUpdates.put("is50meters",true);
+                    } else if(driverDistance<=500) {
+                        driverUpdates.put("is500meters",true);
+                    }
+
+                    sessionsReference.child(sessionID).updateChildren(driverUpdates);
                 }
             }
         });
@@ -591,7 +628,7 @@ public class DriverActivity extends AppCompatActivity
 
     private void showCustomDialog(Booking mb) {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder passengerBuilder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.marker_custom_window, null);
 
         CircleImageView profImg = dialogView.findViewById(R.id.marker_img);
@@ -636,103 +673,121 @@ public class DriverActivity extends AppCompatActivity
             button3.setVisibility(View.VISIBLE);
         }
 
-        builder.setView(dialogView);
-        final AlertDialog dialog = builder.create();
-        dialog.show();
+        passengerBuilder.setView(dialogView);
+        PassengerDialog = passengerBuilder.create();
+        PassengerDialog.show();
 
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 // Handle button click event
-                mMap.clear();
-                isAccepted=true;
-                book_button.setText(CODE_CANCEL);
-                book_button.setBackgroundColor(getColor(R.color.colorRed));
-                acceptButton.setVisibility(View.GONE);
 
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
-                DatabaseReference bookingsRef = database.getReference().child("bookings").child(clickedBookingID);
+                 if(!isAccepted) {
+                    mMap.clear();
+                    isAccepted=true;
+                    book_button.setText("");
+                    book_button.setBackgroundColor(getColor(R.color.blue));
+                    acceptButton.setVisibility(View.GONE);
 
-                HashMap<String, Object> bookingUpdates = new HashMap<>();
-                bookingUpdates.put("isAccepted",true);
-                bookingUpdates.put("driver",loggedInDriverObj);
-                bookingUpdates.put("isCancelled", false);
-                //bookingsRef.child(clickedBookingID).child("driver").setValue(loggedInDriverObj);
-                //bookingsRef.child(clickedBookingID).child("driverLocation").setValue(new LatLngDefined(DriverActivity.this.latitude,DriverActivity.this.longitude));
-                bookingsRef.updateChildren(bookingUpdates);
+                    FirebaseDatabase database = FirebaseDatabase.getInstance();
+                    DatabaseReference bookingsRef = database.getReference().child("bookings").child(clickedBookingID);
 
-                DatabaseReference sessionsRef = database.getReference("sessions");
-                sessionID = clickedBookingID;
-                LatLngDefined myLocNow = new LatLngDefined(DriverActivity.this.latitude,DriverActivity.this.longitude);
-                Session sessionObj = new Session(
-                        loggedInDriverObj,
-                        mb,
-                        LocalDateTime.now().toString(),
-                        myLocNow,
-                        false,
-                        false,
-                        false
-                );
-                sessionsRef.child(sessionID).setValue(sessionObj);
+                    HashMap<String, Object> bookingUpdates = new HashMap<>();
+                    bookingUpdates.put("isAccepted",true);
+                    bookingUpdates.put("driver",loggedInDriverObj);
+                    bookingUpdates.put("isCancelled", false);
+                    //bookingsRef.child(clickedBookingID).child("driver").setValue(loggedInDriverObj);
+                    //bookingsRef.child(clickedBookingID).child("driverLocation").setValue(new LatLngDefined(DriverActivity.this.latitude,DriverActivity.this.longitude));
+                    bookingsRef.updateChildren(bookingUpdates);
 
-                passengerMarker = addMarker(
-                        new LatLng(
-                                sessionObj.getBooking().getOrigin().getLatitude(),
-                                sessionObj.getBooking().getOrigin().getLongitude()
-                        ), sessionObj.getBooking(), 1
-                );
+                    DatabaseReference sessionsRef = database.getReference("sessions");
+                    sessionID = clickedBookingID;
+                    LatLngDefined myLocNow = new LatLngDefined(DriverActivity.this.latitude,DriverActivity.this.longitude);
+                    Session sessionObj = new Session(
+                            loggedInDriverObj,
+                            mb,
+                            LocalDateTime.now().toString(),
+                            myLocNow,
+                            false,
+                            false,
+                            false,
+                            false,
+                            false,
+                            false
+                    );
+                    sessionsRef.child(sessionID).setValue(sessionObj);
 
-//                passengerDestinationMarker = addMarker(
-//                        new LatLng(
-//                                sessionObj.getBooking().getDestination().getLatitude(),
-//                                sessionObj.getBooking().getDestination().getLongitude()
-//                        ), sessionObj.getBooking(), 2
-//                );
+                    passengerMarker = addMarker(
+                            new LatLng(
+                                    sessionObj.getBooking().getOrigin().getLatitude(),
+                                    sessionObj.getBooking().getOrigin().getLongitude()
+                            ), sessionObj.getBooking(), 1
+                    );
 
-                passengerDestinationMarker = mMap.addMarker(new MarkerOptions()
-                        .title(sessionObj.getBooking().getDestinationText())
-                        .position(
-                                new LatLng(sessionObj.getBooking().getDestination().getLatitude(),sessionObj.getBooking().getDestination().getLongitude())
-                        ).icon(BitmapDescriptorFactory.fromResource(R.drawable.finish_flag)));
+                    passengerDestinationMarker = mMap.addMarker(new MarkerOptions()
+                            .title(sessionObj.getBooking().getDestinationText())
+                            .position(
+                                    new LatLng(sessionObj.getBooking().getDestination().getLatitude(),sessionObj.getBooking().getDestination().getLongitude())
+                            ).icon(BitmapDescriptorFactory.fromResource(R.drawable.finish_flag)));
 
+                    targetDestination = new LatLng(
+                            sessionObj.getBooking().getOrigin().getLatitude(),
+                            sessionObj.getBooking().getOrigin().getLongitude()
+                    );
 
-                targetDestination = new LatLng(
-                        sessionObj.getBooking().getOrigin().getLatitude(),
-                        sessionObj.getBooking().getOrigin().getLongitude()
-                );
+                    DatabaseReference sessionRef = database.getReference().child("sessions").child(sessionID);
+                    sessionRef.addValueEventListener(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot sessionSnapshot) {
 
-                DatabaseReference sessionRef = database.getReference().child("sessions").child(sessionID);
-                sessionRef.addValueEventListener(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot sessionSnapshot) {
+                            if(sessionSnapshot.exists()) {
+                                Session mySession = sessionSnapshot.getValue(Session.class);
+                                if(!mySession.isBookingEmpty())
+                                    if(mySession.getBooking().getBookingID().equals(clickedBookingID)) {
+                                        if(mySession.getIsAccepted()) {
+                                            PassengerDialog.dismiss();
+                                            waitDialog.dismiss();
+                                            isPassengerAccept = true;
+                                            DownloadTask downloadTask = new DownloadTask();
+                                            LatLng myL = new LatLng(DriverActivity.this.latitude,DriverActivity.this.longitude);
+                                            String url = getDirectionsUrl(myL, targetDestination);
+                                            downloadTask.execute(url);
 
-                        if(sessionSnapshot.exists()) {
-                            Session mySession = sessionSnapshot.getValue(Session.class);
-                            if(!mySession.isBookingEmpty())
-                                if(mySession.getBooking().getBookingID().equals(clickedBookingID)) {
-                                    thisSession = mySession;
-                                    if(mySession.getIsDriverArrived()) {
-                                        targetDestination = new LatLng(
-                                                mySession.getBooking().getDestination().getLatitude(),
-                                                mySession.getBooking().getDestination().getLongitude()
-                                        );
-                                        mMap.clear();
-                                        addMarker(targetDestination, mySession.getBooking(),2);
-                                        book_button.setText(CODE_DONE);
-                                        book_button.setBackgroundColor(getColor(R.color.green));
-                                        book_button.setVisibility(View.VISIBLE);
+                                            thisSession = mySession;
+                                            mMap.clear();
+                                            if(mySession.getIsDriverArrived()) {
+                                                //passengerMarker.remove();
+                                                targetDestination = new LatLng(
+                                                        mySession.getBooking().getDestination().getLatitude(),
+                                                        mySession.getBooking().getDestination().getLongitude()
+                                                );
+                                                addMarker(targetDestination, mySession.getBooking(),2);
+                                                book_button.setText(CODE_DONE);
+                                                book_button.setBackgroundColor(getColor(R.color.green));
+                                                book_button.setVisibility(View.VISIBLE);
+                                            } else {
+                                                addMarker(targetDestination, mySession.getBooking(),1);
+                                                addMarker(new LatLng(thisSession.getBooking().getDestination().getLatitude(),thisSession.getBooking().getDestination().getLongitude()), mySession.getBooking(),2);
+                                            }
+                                        }
                                     }
-                                }
+                            }
                         }
-                    }
 
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
 
-                    }
-                });
+                        }
+                    });
+                }
 
-                dialog.dismiss();
+                if(!isPassengerAccept) {
+                    book_button.setText("Waiting for Passenger to Respond");
+                    waitDialog.show();
+                }
+
+                PassengerDialog.dismiss();
+
             }
         });
 
@@ -747,7 +802,7 @@ public class DriverActivity extends AppCompatActivity
                 LatLng positionUpdate = new LatLng( DriverActivity.this.latitude,DriverActivity.this.longitude );
                 CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
                 mMap.animateCamera( update );
-                dialog.dismiss();
+                PassengerDialog.dismiss();
             }
         });
 
@@ -755,7 +810,7 @@ public class DriverActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 FirebaseDatabase.getInstance().getReference().child("bookings").child(clickedBookingID).child("isClicked").setValue(false);
-                dialog.dismiss();
+                PassengerDialog.dismiss();
             }
         });
     }
@@ -1065,7 +1120,8 @@ public class DriverActivity extends AppCompatActivity
 
     @Override
     public void onLocationChanged(Location location) {
-
+        DriverActivity.this.latitude=location.getLatitude();
+        DriverActivity.this.longitude=location.getLongitude();
     }
 
 
@@ -1151,7 +1207,7 @@ public class DriverActivity extends AppCompatActivity
         String sensor = "sensor=false";
 
         // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyBJfB6BWBgpsU-_EBtsZ3SiuYUDhz0sJJE";
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyBJfB6BWBgpsU-_EBtsZ3SiuYUDhz0sJJE"; //+ getString(R.string.google_maps_key);
 
         // Output format
         String output = "json";
@@ -1182,12 +1238,15 @@ public class DriverActivity extends AppCompatActivity
                     removeBookingMarkers();
                     bookingMarkers.clear();
                     hashMapBookings.clear();
+
                     for (DataSnapshot childSnapshot: dataSnapshot.getChildren()) {
                         if(childSnapshot.exists()) {
                             String key = childSnapshot.getKey();
                             Booking booking = childSnapshot.getValue(Booking.class);
 
-                            if(!booking.getIsAccepted() && !booking.getIsClicked()) {
+                            LatLng center = new LatLng(DriverActivity.this.latitude, DriverActivity.this.longitude);
+                            LatLng point = new LatLng(booking.getOrigin().getLatitude(), booking.getOrigin().getLongitude());
+                            if(!booking.getIsAccepted() && !booking.getIsCancelled() && !booking.getIsClicked() && isWithinRadius(point,center,2)) {
                                 hashMapBookings.put(key, booking);
                                 Marker bm = addMarker(
                                         new LatLng(
@@ -1199,8 +1258,42 @@ public class DriverActivity extends AppCompatActivity
                                 bookingMarkers.add(bm);
                             }
                         }
-
                     }
+                } else {
+                    refBookings.child(clickedBookingID).addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            if(dataSnapshot.exists()) {
+                                Booking booking = dataSnapshot.getValue(Booking.class);
+                                if(booking.getIsCancelled()) {
+                                    Toast.makeText(getBaseContext(), "Passenger just cancelled your this booking, find another.", Toast.LENGTH_SHORT).show();
+
+                                    mMap.clear();
+                                    layoutDetails.setVisibility(View.GONE);
+
+                                    DatabaseReference sessionsRef = database.getReference("sessions");
+                                    sessionsRef.child(sessionID).child("isCancelled").setValue(true);
+
+                                    clickedBookingID = null;
+                                    isAccepted=false;
+
+                                    addBookingsMarkers();
+
+                                    LatLng positionUpdate = new LatLng( DriverActivity.this.latitude,DriverActivity.this.longitude );
+                                    CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
+                                    mMap.animateCamera( update );
+                                    layoutDetails.setVisibility(View.GONE);
+                                    waitDialog.dismiss();
+                                    PassengerDialog.dismiss();
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
                 }
             }
 
@@ -1215,5 +1308,143 @@ public class DriverActivity extends AppCompatActivity
         for(int i=0; i<bookingMarkers.size(); i++) {
             bookingMarkers.get(i).remove();
         }
+    }
+
+    /**
+     * A method to download json data from url
+     */
+    private String downloadUrl(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    private class DownloadTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... url) {
+
+            String data = "";
+
+            try {
+                data = downloadUrl(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTask parserTask = new ParserTask();
+
+            parserTask.execute(result);
+
+        }
+    }
+
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            //MarkerOptions markerOptions = new MarkerOptions();
+
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                List<HashMap<String, String>> path = result.get(i);
+
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+
+                    points.add(position);
+                }
+
+                lineOptions.addAll(points);
+                lineOptions.width(10);
+                lineOptions.color(getColor(R.color.blue));
+            }
+
+            // Drawing polyline in the Google Map for the i-th route
+            mMap.addPolyline(lineOptions);
+        }
+    }
+
+    private static final double EARTH_RADIUS = 6371; // Earth's radius in kilometers
+    public static double haversine(double lat1, double lng1, double lat2, double lng2) {
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.sin(dLng / 2) * Math.sin(dLng / 2) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return EARTH_RADIUS * c;
+    }
+
+    public static boolean isWithinRadius(LatLng point, LatLng center, double radius) {
+        double distance = haversine(point.latitude, point.longitude, center.latitude, center.longitude);
+        return distance <= radius;
     }
 }
