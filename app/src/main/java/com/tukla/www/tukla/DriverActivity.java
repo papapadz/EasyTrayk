@@ -747,7 +747,21 @@ public class DriverActivity extends AppCompatActivity
                                         if(mySession.getIsAccepted()) {
                                             PassengerDialog.dismiss();
                                             waitDialog.dismiss();
-                                            isPassengerAccept = true;
+                                            if(!isPassengerAccept) {
+                                                isPassengerAccept = true;
+                                                AlertDialog.Builder builder = new AlertDialog.Builder(DriverActivity.this);
+                                                builder.setTitle("Passenger accepted!");
+                                                builder.setMessage("Passenger has accepted, please go to the passenger's location now");
+                                                AlertDialog dialog = builder.create();
+                                                dialog.show();
+                                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        // Do something when the OK button is clicked
+                                                        dialog.dismiss();
+                                                    }
+                                                });
+                                            }
                                             DownloadTask downloadTask = new DownloadTask();
                                             LatLng myL = new LatLng(DriverActivity.this.latitude,DriverActivity.this.longitude);
                                             String url = getDirectionsUrl(myL, targetDestination);

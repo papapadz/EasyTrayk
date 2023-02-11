@@ -1064,6 +1064,19 @@ public class MainActivity extends AppCompatActivity
         myBookingObj = new Booking(recentBookingID,loggedInUser, null,LocalDateTime.now().toString(),l1,l2,false,false, paramFare, paramDistance,myCurrentloc.getText().toString(),txtDropOff.getText().toString(),txtMyNote,false,false);
         myBookingsRef.child(recentBookingID).setValue(myBookingObj);
 
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                                builder.setTitle("Booking successful!");
+                                                builder.setMessage("Please wait for a driver...");
+                                                AlertDialog dialog = builder.create();
+                                                dialog.show();
+                                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                                    @Override
+                                                    public void onClick(DialogInterface dialog, int which) {
+                                                        // Do something when the OK button is clicked
+                                                        dialog.dismiss();
+                                                    }
+                                                });
+
         myBookingsRef.child(recentBookingID).addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {

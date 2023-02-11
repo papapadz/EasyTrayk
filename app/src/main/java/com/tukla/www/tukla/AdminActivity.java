@@ -56,13 +56,13 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
 
-        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
+        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.admin_drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close );
         drawer.setDrawerListener( toggle );
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById( R.id.nav_view );
+        NavigationView navigationView = (NavigationView) findViewById( R.id.nav_admin_view );
         navigationView.setNavigationItemSelectedListener( this );
         //drawer.findViewById(R.id.nav_user_lists).setVisibility(View.VISIBLE);
         //navigationView.findViewById(R.id.nav_book).setVisibility(View.GONE);
@@ -108,19 +108,19 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
         database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
 
         View navHeader = navigationView.getHeaderView(0);
-        CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
+        //CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
 
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
-        StorageReference imgRef = storageRef.child("images/"+mAuth.getUid()+".jpg");
-        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                Glide.with(profImg.getContext())
-                        .load(uri)
-                        .fitCenter()
-                        .into(profImg);
-            }
-        });
+//        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+//        StorageReference imgRef = storageRef.child("images/"+mAuth.getUid()+".jpg");
+//        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//            @Override
+//            public void onSuccess(Uri uri) {
+//                Glide.with(profImg.getContext())
+//                        .load(uri)
+//                        .fitCenter()
+//                        .into(profImg);
+//            }
+//        });
 
         database.getReference("users").child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -147,10 +147,11 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
         int id = menuItem.getItemId();
 
         if(id==R.id.nav_user_list) {
-            Intent intent = new Intent(this, AdminActivity.class);
-            finish();
-            startActivity(intent);
-        } else if(id==R.id.nav_history) {
+            //Intent intent = new Intent(this, AdminActivity.class);
+            //finish();
+            //startActivity(intent);
+            return false;
+        } else if(id==R.id.nav_admin_history) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
             Intent intent = new Intent(this, AdminHistory.class);
             intent.putExtra("ROLE","ADMIN");
@@ -162,7 +163,7 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
             finish();
             startActivity(intent);
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
+        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.admin_drawer_layout );
         drawer.closeDrawer( GravityCompat.START );
         return true;
     }

@@ -60,13 +60,13 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
         TextView customText = toolbar.findViewById(R.id.toolbarTextView);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
-        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
+        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.admin_drawer_layout_history );
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close );
         drawer.setDrawerListener( toggle );
         toggle.syncState();
 
-        NavigationView navigationView = (NavigationView) findViewById( R.id.nav_view );
+        NavigationView navigationView = (NavigationView) findViewById( R.id.nav_admin_view_history );
         navigationView.setNavigationItemSelectedListener( this );
 
         /** setup drawer **/
@@ -74,19 +74,19 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
         database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
 
         View navHeader = navigationView.getHeaderView(0);
-        CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
-
-        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
-        StorageReference imgRef = storageRef.child("images/"+mAuth.getUid()+".jpg");
-        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri uri) {
-                Glide.with(profImg.getContext())
-                        .load(uri)
-                        .fitCenter()
-                        .into(profImg);
-            }
-        });
+//        CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
+//
+//        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
+//        StorageReference imgRef = storageRef.child("images/"+mAuth.getUid()+".jpg");
+//        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+//            @Override
+//            public void onSuccess(Uri uri) {
+//                Glide.with(profImg.getContext())
+//                        .load(uri)
+//                        .fitCenter()
+//                        .into(profImg);
+//            }
+//        });
 
         database.getReference("users").child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -136,19 +136,16 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
             Intent intent = new Intent(this, AdminActivity.class);
             finish();
             startActivity(intent);
-        } else if(id==R.id.nav_history) {
+        } else if(id==R.id.nav_admin_history) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
-            Intent intent = new Intent(this, AdminHistory.class);
-            intent.putExtra("ROLE","ADMIN");
-            startActivity(intent);
-            finish();
+            return true;
         } else if(id==nav_logOut) {
             //FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(this, Login.class);
             finish();
             startActivity(intent);
         }
-        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
+        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.admin_drawer_layout_history );
         drawer.closeDrawer( GravityCompat.START );
 
         return true;
