@@ -671,7 +671,9 @@ public class DriverActivity extends AppCompatActivity
             button1.setVisibility(View.GONE);
             button2.setVisibility(View.GONE);
             button3.setVisibility(View.VISIBLE);
-        }
+            button2.setText("Cancel");
+        } else
+            button2.setText("Close");
 
         passengerBuilder.setView(dialogView);
         PassengerDialog = passengerBuilder.create();

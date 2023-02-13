@@ -156,7 +156,7 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
             Intent intent = new Intent(this, AdminHistory.class);
             intent.putExtra("ROLE","ADMIN");
             startActivity(intent);
-            finish();
+           // finish();
         } else if(id==nav_logOut) {
             //FirebaseAuth.getInstance().signOut();
             Intent intent = new Intent(this, Login.class);

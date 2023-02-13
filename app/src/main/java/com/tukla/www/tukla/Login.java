@@ -115,7 +115,7 @@ public class Login extends AppCompatActivity implements Serializable {
             if(Password.length()<6)
             {
                 password.requestFocus();
-                password.setError("Incorrect Pasword");
+                password.setError("Incorrect Password");
             }
             else{
                 return true;
@@ -188,8 +188,8 @@ public class Login extends AppCompatActivity implements Serializable {
                             });
 
                         } else {
-                            Log.d("vehicle", "Unsuccesful sign in");
-                            Toast.makeText(getApplicationContext(), "Unsuccesful Sign in", Toast.LENGTH_SHORT)
+                            //Log.d("vehicle", "Unsuccesful sign in");
+                            Toast.makeText(getApplicationContext(), "Unsuccessful Log in", Toast.LENGTH_SHORT)
                                     .show();
                             UpdateUI(null);
                             dialog.dismiss();

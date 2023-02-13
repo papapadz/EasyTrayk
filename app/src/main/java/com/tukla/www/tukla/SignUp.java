@@ -126,8 +126,8 @@ public class SignUp extends AppCompatActivity {
             {
                 Toast.makeText(getApplicationContext(), "ID is required!", Toast.LENGTH_SHORT).show();
                 AlertDialog.Builder builder = new AlertDialog.Builder(SignUp.this);
-                builder.setTitle("ID is required!");
-                builder.setMessage("Please upload an image of your ID.");
+                builder.setTitle("Profile Picture is required!");
+                builder.setMessage("Please upload a profile picture.");
                 AlertDialog dialog = builder.create();
                 dialog.show();
             } else if(eFullName.getText().toString().equals(""))

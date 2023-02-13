@@ -134,7 +134,7 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
 
         if(id==R.id.nav_user_list) {
             Intent intent = new Intent(this, AdminActivity.class);
-            finish();
+            //finish();
             startActivity(intent);
         } else if(id==R.id.nav_admin_history) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
