@@ -277,10 +277,10 @@ public class ProfileActivity extends AppCompatActivity {
 
             if(isDriver) {
                 uploadFirebase(licenseBitmap, "licenses");
-                driverObj = new Driver(toda.getText().toString(),plateNumber.getText().toString());
+                driverObj = new Driver(toda.getText().toString(),plateNumber.getText().toString(),null);
             }
 
-            User newUser = new User(mAuth.getUid(),name.getText().toString(),address.getText().toString(),phone.getText().toString(),isDriver,user.getIsVerified(), LocalDateTime.now().toString(),user.getIsAdmin(), driverObj, user.getIsRejected());
+            User newUser = new User(mAuth.getUid(),name.getText().toString(),null,null,address.getText().toString(),phone.getText().toString(),isDriver,user.getIsVerified(), LocalDateTime.now().toString(),user.getIsAdmin(), driverObj, user.getIsRejected(), user.getCategory());
             FirebaseDatabase.getInstance().getReference("users").child(mAuth.getUid()).setValue(newUser);
 
             showPopupDialog("Profile has been updated!");

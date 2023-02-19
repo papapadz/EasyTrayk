@@ -42,7 +42,6 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
     private List<History> listHistory = new ArrayList<>();
     private FirebaseAuth mAuth;
     private ListView listView;
-    private String role;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,7 +51,6 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
         mAuth = FirebaseAuth.getInstance();
         listView = findViewById(R.id.list_history);
 
-        role = (String) getIntent().getSerializableExtra("ROLE");
 
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
@@ -136,7 +134,7 @@ public class AdminHistory extends AppCompatActivity implements NavigationView.On
             Intent intent = new Intent(this, AdminActivity.class);
             finish();
             startActivity(intent);
-        } else if(id==R.id.nav_admin_history) {
+        } else if(id==R.id.nav_rating_list) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
             return true;
         } else if(id==nav_logOut) {

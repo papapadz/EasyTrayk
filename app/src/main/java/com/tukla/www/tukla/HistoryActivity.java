@@ -146,6 +146,8 @@ public class HistoryActivity extends AppCompatActivity implements NavigationView
             startActivity(intent);
         } else if(id==nav_logOut) {
             //FirebaseAuth.getInstance().signOut();
+            if(role.equals("DRIVER"))
+                FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).removeValue();
             Intent intent = new Intent(this, Login.class);
             finish();
             startActivity(intent);

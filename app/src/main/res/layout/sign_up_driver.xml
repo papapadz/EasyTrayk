@@ -4,10 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
-    tools:context=".SignUp"
-    android:background="@drawable/side_nav_bar"
+    android:padding="20dp"
+    tools:context=".SignUpDriver"
     android:orientation="vertical">
+
+    <ImageView
+        android:layout_gravity="center"
+        android:layout_width="150sp"
+        android:layout_height="150sp"
+        android:src="@drawable/ic_launcher"
+        />
+
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
@@ -17,120 +24,260 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <TextView
-                android:textAlignment="center"
+            <LinearLayout
+                android:id="@+id/signupDriverLinearLayout1"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textSize="26dp"
-                android:textStyle="bold"
-                android:textColor="@color/white"
-                android:text="SIGN UP"
-                android:layout_marginBottom="10dp"/>
-
-            <ImageView
-                android:id="@+id/image_view"
-                android:layout_width="80dp"
-                android:layout_height="80dp"
-                android:scaleType="centerCrop"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_menu_camera" />
-
-            <TextView
+                android:layout_height="match_parent"
+                android:orientation="vertical">
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Upload Profile Picture"
-                android:textColor="#ffffff"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:typeface="sans"
-                android:gravity="center" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
 
-            <EditText
-                android:hint="Full Name"
-                android:id="@+id/eFullName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <ImageView
+                    android:tint="@color/colorPrimary"
+                    android:id="@+id/image_view"
+                    android:layout_width="80dp"
+                    android:layout_height="80dp"
+                    android:scaleType="centerCrop"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_account_circle" />
 
-            <EditText
-                android:hint="Address"
-                android:id="@+id/eAddress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/person"
+                    android:hint="Pangalan"
+                    android:id="@+id/eFullName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <EditText
-                android:hint="Phone Number"
-                android:id="@+id/ePhoneNumber"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/person"
+                    android:hint="Pangitnang Apelyido"
+                    android:id="@+id/eMiddleName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <EditText
-                android:hint="TODA"
-                android:id="@+id/eToda"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/person"
+                    android:hint="Apelyido"
+                    android:id="@+id/eLastName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <EditText
-                android:hint="Plate Number"
-                android:id="@+id/ePlateNumber"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/ic_home"
+                    android:hint="Address"
+                    android:id="@+id/eAddress"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <EditText
-                android:hint="Email"
-                android:layout_gravity="center"
-                android:id="@+id/eEmail"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/ic_iphone"
+                    android:hint="Numero ng selpon"
+                    android:layout_gravity="center"
+                    android:id="@+id/ePhoneNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <EditText
-                android:hint="Password"
-                android:layout_gravity="center"
-                android:id="@+id/mpassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-            <CheckBox
-                android:id="@+id/show_hide_checkbox_1"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Show/Hide password"
-                android:textSize="10sp" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/ic_mail"
+                    android:hint="Email Address"
+                    android:layout_gravity="center"
+                    android:id="@+id/eEmail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <EditText
-                android:hint="Confirm Password"
-                android:layout_gravity="center"
-                android:id="@+id/mConfirmPassword"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textPassword" />
-            <CheckBox
-                android:id="@+id/show_hide_checkbox_2"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Show/Hide password"
-                android:textSize="10sp" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/ic_award"
+                    android:hint="Numero ng Traysikel"
+                    android:id="@+id/eTricycleNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <ImageView
-                android:id="@+id/img_license"
-                android:layout_marginTop="10dp"
-                android:padding="10dp"
-                android:layout_gravity="center"
-                android:layout_width="match_parent"
-                android:layout_height="120dp"
-                android:src="@drawable/upload_id" />
+                <EditText
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/ic_text"
+                    android:hint="Plaka ng Motor"
+                    android:id="@+id/ePlateNumber"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
 
-            <Button
-                android:layout_marginTop="10dp"
-                android:id="@+id/button2"
+                <AutoCompleteTextView
+                    android:hint="TODANG Nasalihan"
+                    android:id="@+id/todaAutocomplete"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorPrimary"
+                    android:drawableTint="@color/colorPrimary"
+                    android:drawableStart="@drawable/ic_list"/>
+
+
+                <TextView
+                    android:textColor="@color/blue"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="* Larawan ng lisensya" />
+
+                <ImageView
+                    android:tint="@color/colorPrimary"
+                    android:id="@+id/img_license"
+                    android:layout_marginTop="10dp"
+                    android:padding="10dp"
+                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_menu_camera"
+                    />
+
+                <TextView
+                    android:textColor="@color/blue"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="* Larawan ng prangkisa" />
+
+                <ImageView
+                    android:tint="@color/colorPrimary"
+                    android:id="@+id/img_franchise"
+                    android:layout_marginTop="10dp"
+                    android:padding="10dp"
+                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_menu_camera"
+                    />
+
+                <TextView
+                    android:textColor="@color/blue"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="* Larawan ng Motor" />
+
+                <ImageView
+                    android:tint="@color/colorPrimary"
+                    android:id="@+id/img_motor"
+                    android:layout_marginTop="10dp"
+                    android:padding="10dp"
+                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_menu_camera"
+                    />
+
+                <TextView
+                    android:textColor="@color/blue"
+                    android:gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="* Larawan ng Traysikel" />
+
+                <ImageView
+                    android:tint="@color/colorPrimary"
+                    android:id="@+id/img_tricycle"
+                    android:layout_marginTop="10dp"
+                    android:padding="10dp"
+                    android:layout_gravity="center"
+                    android:layout_width="match_parent"
+                    android:layout_height="100dp"
+                    android:src="@drawable/ic_menu_camera"
+                    />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/button4"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimary"
+                    android:text="MAGREGISTRO"
+                    android:textColor="#ffffff"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/button3"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/green"
+                    android:text="IKANSELA"
+                    android:textColor="#ffffff"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/signupDriverLinearLayout2"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/blue"
-                android:text="SignUP"
-                android:textColor="#ffffff"
-                android:textSize="18dp"
-                android:textStyle="bold" />
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <EditText
+                    android:drawableStart="@drawable/ic_password"
+                    android:drawableTint="@color/colorPrimary"
+                    android:hint="Ilagay and Password"
+                    android:layout_gravity="center"
+                    android:id="@+id/mpassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword" />
+
+                <CheckBox
+                    android:id="@+id/show_hide_checkbox_1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Show/Hide password"
+                    android:textSize="10sp" />
+
+                <EditText
+                    android:drawableStart="@drawable/ic_password"
+                    android:drawableTint="@color/colorPrimary"
+                    android:hint="Kumpirmahin ang Password"
+                    android:layout_gravity="center"
+                    android:id="@+id/mConfirmPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword" />
+                <CheckBox
+                    android:id="@+id/show_hide_checkbox_2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Show/Hide password"
+                    android:textSize="10sp" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="12sp"
+                    android:text="Kaylangan maglagay ng walo o higit pang letra" />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/button2"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimary"
+                    android:text="ISUBMIT"
+                    android:textColor="#ffffff"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
 
         </LinearLayout>
+
     </ScrollView>
 
 </LinearLayout>

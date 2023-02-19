@@ -63,15 +63,20 @@ public class HistoryListAdapter extends BaseAdapter {
         TextView historyName = convertView.findViewById(R.id.historyName);
         TextView historyFare = convertView.findViewById(R.id.historyFare);
         TextView historyFeedback = convertView.findViewById(R.id.list_history_feedback);
+        TextView txtRating = convertView.findViewById(R.id.starRating);
 
         History data = (History) getItem(position);
         distance.setText(data.getSession().getBooking().getDistance()+"KM");
         historyDestination.setText(data.getSession().getBooking().getDestinationText());
         historyFeedback.setText("");
-        FirebaseDatabase.getInstance().getReference("feedbacks").child(data.getSession().getBooking().getBookingID()).child("feedback").addListenerForSingleValueEvent(new ValueEventListener() {
+        FirebaseDatabase.getInstance().getReference("feedbacks").child(data.getSession().getBooking().getBookingID()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                historyFeedback.setText("Feedback: " + dataSnapshot.getValue(String.class));
+                if(dataSnapshot.exists()) {
+                    historyFeedback.setText("Feedback: " + dataSnapshot.child("feedback").getValue(String.class));
+                    txtRating.setText(dataSnapshot.child("rating").getValue(Integer.class) + " star");
+                }
+
             }
 
             @Override

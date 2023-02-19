@@ -40,6 +40,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -78,6 +80,7 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -154,13 +157,17 @@ public class MainActivity extends AppCompatActivity
     NavigationView navigationView;
     // Create a LatLngBounds object for Calamba, Laguna
     final LatLngBounds calambaBounds = new LatLngBounds(
-            new LatLng(14.139585, 121.036924), // Southwest corner
-            new LatLng(14.241103070741213, 121.19193372793421) // Northeast corner
+            new LatLng(13.816244, 121.428803), // Southwest corner
+            new LatLng(14.061821, 121.564072) // Northeast corner
     );
     private Boolean isMapClick;
     private String txtMyNote;
     private Boolean isCancelled = false;
     private int isNotified = 0;
+
+    private List<DriverLocationObject> listDriverLocationsObject = new ArrayList<>();
+    private ListView listViewDriverLocations;
+    private LinearLayout linearLayoutnearby;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
@@ -173,6 +180,8 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
 
+        listViewDriverLocations = findViewById(R.id.listViewDriverNear);
+        linearLayoutnearby = findViewById(R.id.linearNearbyList);
         mapFragment = (MapFragment) getFragmentManager()
                 .findFragmentById( R.id.map );
         mapView = mapFragment.getView();
@@ -200,6 +209,7 @@ public class MainActivity extends AppCompatActivity
         //platenumber_text = (TextView) findViewById(R.id.platenumber_text);
 
         book_button=(Button)findViewById(R.id.book_button);
+        findNearbyDrivers();
         //book_button.setText(CODE_SOS);
         book_button.setOnClickListener(new View.OnClickListener() {
 
@@ -218,12 +228,12 @@ public class MainActivity extends AppCompatActivity
 
                             showCustomBookDialog(destinationResult.getAddressLine(0));
 
-    //                        waitBookAccept();
+                            //                        waitBookAccept();
 
                         } else {
                             AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                             builder.setTitle("No location found!");
-                            builder.setMessage("Please enter a location within Calamba, Laguna only.");
+                            builder.setMessage("Please enter a location within Sariaya, Quezon only.");
                             AlertDialog dialog = builder.create();
 
                             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -255,7 +265,7 @@ public class MainActivity extends AppCompatActivity
                     Toast.makeText(getApplicationContext(),"An error occured! Try selecting another place.",Toast.LENGTH_SHORT);
                     AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                     builder.setTitle("No location found!");
-                    builder.setMessage("Please enter a location within Calamba, Laguna only.");
+                    builder.setMessage("Please enter a location within Sariaya, Quezon only.");
                     AlertDialog dialog = builder.create();
 
                     builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -293,91 +303,86 @@ public class MainActivity extends AppCompatActivity
 
                     if(!mySession.isBookingEmpty())
                         if(mySession.getBooking().getBookingID().equals(recentBookingID) && mySession.getIsAccepted()) {
-                        thisSession = mySession;
-                        LatLng positionUpdate = new LatLng(mySession.getDriverLocation().getLatitude(),mySession.getDriverLocation().getLongitude());
-                        driverMarker.remove();
-                        MarkerOptions myMarkerOptions = new MarkerOptions();
-                        myMarkerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_tricycle));
-                        myMarkerOptions.position(positionUpdate);
-                        //myMarkerOptions.title("Driver: "+mySession.getDriver().getFullname()+" | Plate No. "+mySession.getDriver().getDriver().getPlateNumber());
-                        driverMarker = mMap.addMarker(myMarkerOptions);
-                        driverMarker.setTag(mySession.getDriver());
+                            thisSession = mySession;
+                            LatLng positionUpdate = new LatLng(mySession.getDriverLocation().getLatitude(),mySession.getDriverLocation().getLongitude());
+                            driverMarker.remove();
+                            MarkerOptions myMarkerOptions = new MarkerOptions();
+                            myMarkerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_tricycle));
+                            myMarkerOptions.position(positionUpdate);
+                            //myMarkerOptions.title("Driver: "+mySession.getDriver().getFullname()+" | Plate No. "+mySession.getDriver().getDriver().getPlateNumber());
+                            driverMarker = mMap.addMarker(myMarkerOptions);
+                            driverMarker.setTag(mySession.getDriver());
 
-                        CameraUpdate camerUpdate = CameraUpdateFactory.newLatLngZoom( positionUpdate, 20 );
-                        mMap.animateCamera(camerUpdate);
+                            CameraUpdate camerUpdate = CameraUpdateFactory.newLatLngZoom( positionUpdate, 20 );
+                            mMap.animateCamera(camerUpdate);
 
-                        Location driverLocation = new Location("");
-                        driverLocation.setLatitude(mySession.getDriverLocation().getLatitude());
-                        driverLocation.setLongitude(mySession.getDriverLocation().getLongitude());
+                            Location driverLocation = new Location("");
+                            driverLocation.setLatitude(mySession.getDriverLocation().getLatitude());
+                            driverLocation.setLongitude(mySession.getDriverLocation().getLongitude());
 
-                        Location myCurrLocation = new Location("");
-                        myCurrLocation.setLatitude(myPosition.latitude);
-                        myCurrLocation.setLongitude(myPosition.longitude);
-//                        float driverDistance = myCurrLocation.distanceTo(driverLocation);
-//                        if(mySession.getIsDriverArrived()) {
-//                            //Location dest = new Location("");
-//                            //dest.setLatitude(myBookingObj.getDestination().getLatitude());
-//                            //dest.setLongitude(myBookingObj.getDestination().getLongitude());
-//                            //driverDistance = myCurrLocation.distanceTo(dest);
-//                        } else {
-//                            //book_button.setText(driverDistance+"m");
-//                        }
+                            Location myCurrLocation = new Location("");
+                            myCurrLocation.setLatitude(myPosition.latitude);
+                            myCurrLocation.setLongitude(myPosition.longitude);
+
+                            double dist = driverLocation.distanceTo(myCurrLocation)/1000;
+                            double time = (dist/20) * 60;
 
 
-                        if(mySession.getIs500meters() && !mySession.getIsDriverArrived() && isNotified==0) {
-                            isNotified=1;
-                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                            builder.setTitle("Your Driver is near!");
-                            builder.setMessage("I am 500 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
-                            AlertDialog dialog = builder.create();
+//                            if(mySession.getIs500meters() && !mySession.getIsDriverArrived() && isNotified==0) {
+//                                isNotified=1;
+//                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//                                builder.setTitle("Your Driver is near!");
+//                                builder.setMessage("I am 500 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
+//                                AlertDialog dialog = builder.create();
+//
+//                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+//                                    @Override
+//                                    public void onClick(DialogInterface dialog, int which) {
+//                                        // Do something when the OK button is clicked
+//                                        dialog.dismiss();
+//                                    }
+//                                });
+//                                dialog.show();
+//                            } else
+                            if(mySession.getIs50meters() && !mySession.getIsDriverArrived() && isNotified==0) {
+                                isNotified=1;
+                                mySessionsRef.child(sessionSnapshot.getKey()).child("isDriverArrived").setValue(true);
+                                book_button.setText(CODE_SOS);
+                                book_button.setBackgroundColor(getColor(R.color.colorRed));
+                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                                builder.setTitle("Your Driver is almost there!");
+                                builder.setMessage("I am 50 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
+                                AlertDialog dialog = builder.create();
 
-                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Do something when the OK button is clicked
-                                    dialog.dismiss();
-                                }
-                            });
-                            dialog.show();
-                        } else if(mySession.getIs50meters() && !mySession.getIsDriverArrived() && isNotified==1) {
-                            isNotified=2;
-                            mySessionsRef.child(sessionSnapshot.getKey()).child("isDriverArrived").setValue(true);
-                            book_button.setText(CODE_SOS);
-                            book_button.setBackgroundColor(getColor(R.color.colorRed));
-                            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                            builder.setTitle("Your Driver is almost there!");
-                            builder.setMessage("I am 50 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
-                            AlertDialog dialog = builder.create();
+                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                    @Override
+                                    public void onClick(DialogInterface dialog, int which) {
+                                        // Do something when the OK button is clicked
+                                        dialog.dismiss();
+                                    }
+                                });
+                                dialog.show();
 
-                            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    // Do something when the OK button is clicked
-                                    dialog.dismiss();
-                                }
-                            });
-                            dialog.show();
+                                Location dest = new Location("");
+                                dest.setLatitude(mySession.getBooking().getDestination().getLatitude());
+                                dest.setLongitude(mySession.getBooking().getDestination().getLongitude());
+
+                                dist = myCurrLocation.distanceTo(dest)/1000;
+                                time = (dist/20) * 60;
+                            }
+
+                            String eta = String.format("%.2f",time);
+                            String sDist = String.format("%.2f",(dist));
+
+                            listDriverLocationsObject.clear();
+                            DriverLocationObject driverLocationObject = new DriverLocationObject(new DriverLocation(mySession.getDriver(),mySession.getDriverLocation(),null,true),"ETA: "+eta+" mins\nDistance: "+sDist+" km");
+                            listDriverLocationsObject.add(driverLocationObject);
+
+                            DriverNearList adapter = new DriverNearList(MainActivity.this, listDriverLocationsObject);
+                            listViewDriverLocations.setAdapter(adapter);
+
+                            break;
                         }
-                        break;
-                    }
-                }
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        database.getReference().child("users").addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                for (DataSnapshot userSnapshot: dataSnapshot.getChildren()) {
-                    if(userSnapshot.getKey().equals(mAuth.getUid())) {
-                        loggedInUser = userSnapshot.getValue(User.class);
-                        Log.d("SAVED USER OBJECT TAG",loggedInUser.toString());
-                        break;
-                    }
                 }
             }
 
@@ -416,6 +421,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
+                loggedInUser = user;
                 TextView txtViewName = navHeader.findViewById(R.id.textView2);
                 txtViewName.setText(user.getFullname());
 
@@ -757,7 +763,7 @@ public class MainActivity extends AppCompatActivity
                     LatLng positionUpdate = new LatLng( MainActivity.this.latitude,MainActivity.this.longitude );
                     CameraUpdate update = CameraUpdateFactory.newLatLngZoom( positionUpdate, 15 );
                     //now=mMap.addMarker(new MarkerOptions().position(positionUpdate)
-                      //      .title("Your Location"));
+                    //      .title("Your Location"));
 
                     mMap.animateCamera( update );
                     //myCurrentloc.setText( ""+latitude );
@@ -786,8 +792,8 @@ public class MainActivity extends AppCompatActivity
                         //String zipcode = returnAddress.getAddressLine(3);
 
                         str.append( localityString ).append( "" );
-                       // str.append( city ).append( "" ).append( region_code ).append( "" );
-                       // str.append( zipcode ).append( "" );
+                        // str.append( city ).append( "" ).append( region_code ).append( "" );
+                        // str.append( zipcode ).append( "" );
 
                         myCurrentloc.setText(str);
 //                        Toast.makeText(getApplicationContext(), str,
@@ -914,8 +920,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onLocationChanged(Location location) {
-
-
+        MainActivity.this.latitude=location.getLatitude();
+        MainActivity.this.longitude=location.getLongitude();
     }
 
     @Override
@@ -992,7 +998,7 @@ public class MainActivity extends AppCompatActivity
 
         try {
             List<Address> addresses = new ArrayList<>();
-           // addressList = geocoder.getFromLocationName(paramLocString,1);
+            // addressList = geocoder.getFromLocationName(paramLocString,1);
             if(isMapClick) {
                 addresses = geocoder.getFromLocation(destinationMarker.getPosition().latitude,destinationMarker.getPosition().longitude,1);
                 //return addresses.get(0);
@@ -1025,7 +1031,7 @@ public class MainActivity extends AppCompatActivity
         String sensor = "sensor=false";
 
         // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyBJfB6BWBgpsU-_EBtsZ3SiuYUDhz0sJJE";
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyDNtPbtC0utrTJNz51MJPhC2290Byx51po";
 
         // Output format
         String output = "json";
@@ -1065,17 +1071,17 @@ public class MainActivity extends AppCompatActivity
         myBookingsRef.child(recentBookingID).setValue(myBookingObj);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-                                                builder.setTitle("Booking successful!");
-                                                builder.setMessage("Please wait for a driver...");
-                                                AlertDialog dialog = builder.create();
-                                                dialog.show();
-                                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                                                    @Override
-                                                    public void onClick(DialogInterface dialog, int which) {
-                                                        // Do something when the OK button is clicked
-                                                        dialog.dismiss();
-                                                    }
-                                                });
+        builder.setTitle("Booking successful!");
+        builder.setMessage("Please wait for a driver...");
+        AlertDialog dialog = builder.create();
+        dialog.show();
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                // Do something when the OK button is clicked
+                dialog.dismiss();
+            }
+        });
 
         myBookingsRef.child(recentBookingID).addValueEventListener(new ValueEventListener() {
             @Override
@@ -1190,7 +1196,9 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 // Handle button click event
+                linearLayoutnearby.setVisibility(View.GONE);
                 FirebaseDatabase.getInstance().getReference().child("sessions").child(recentBookingID).child("isAccepted").setValue(true);
+
                 dialog.dismiss();
             }
         });
@@ -1198,13 +1206,12 @@ public class MainActivity extends AppCompatActivity
         buttonCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                cancelBook();
+                //cancelBook();
                 dialog.dismiss();
             }
         });
 
     }
-
 
     private void showCustomBookDialog(String myDestination) {
 
@@ -1278,7 +1285,7 @@ public class MainActivity extends AppCompatActivity
                         //Toast.makeText(MainActivity.this, "Fail to get data..", Toast.LENGTH_SHORT).show();
                         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                         builder.setTitle("No location found!");
-                        builder.setMessage("Please enter a location within Calamba, Laguna only.");
+                        builder.setMessage("Please enter a location within Sariaya, Quezon only.");
                         AlertDialog dialog = builder.create();
 
                         builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -1318,7 +1325,8 @@ public class MainActivity extends AppCompatActivity
 
     private void cancelBook() {
         //isCancelled = false;
-        //isBookClicked = false;
+        isBookClicked = false;
+        linearLayoutnearby.setVisibility(View.VISIBLE);
         mMap.clear();
         book_button.setText(CODE_BOOK);
         book_button.setBackgroundColor(getColor(R.color.green));
@@ -1335,5 +1343,67 @@ public class MainActivity extends AppCompatActivity
         database.getReference("bookings").child(recentBookingID).updateChildren(myUpdates);
         CameraUpdate update = CameraUpdateFactory.newLatLngZoom(new LatLng(MainActivity.this.latitude,MainActivity.this.longitude) , 15 );
         mMap.animateCamera(update);
+    }
+
+    private void findNearbyDrivers() {
+
+        FirebaseDatabase.getInstance().getReference().child("driverLocations").addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(!isBookClicked) {
+                    listDriverLocationsObject.clear();
+                    LatLng center = new LatLng(MainActivity.this.latitude,MainActivity.this.longitude);
+                    Location start = new Location("");
+                    start.setLatitude(MainActivity.this.latitude);
+                    start.setLongitude(MainActivity.this.longitude);
+
+                    for (DataSnapshot driverLocationSnapshot: dataSnapshot.getChildren()) {
+                        DriverLocation driverLocation = driverLocationSnapshot.getValue(DriverLocation.class);
+                        LatLng driverLoc = new LatLng(driverLocation.getLocation().getLatitude(),driverLocation.getLocation().getLongitude());
+
+                        if(isWithinRadius(driverLoc,center,2) && driverLocation.getIsActive()) {
+
+                            Location end = new Location("");
+                            end.setLatitude(driverLoc.latitude);
+                            end.setLongitude(driverLoc.longitude);
+                            double dist = start.distanceTo(end)/1000;
+                            double time = (dist/20) * 60;
+
+                            //String eta = "ETA: "+time+" mins \nDistance: "+(dist/1000)+" km";
+                            String eta = String.format("%.2f",time);
+                            String sDist = String.format("%.2f",(dist));
+
+                            DriverLocationObject driverLocationObject = new DriverLocationObject(driverLocation,"ETA: "+eta+" mins\nDistance: "+sDist+" km");
+                            listDriverLocationsObject.add(driverLocationObject);
+                        }
+                    }
+                    DriverNearList adapter = new DriverNearList(MainActivity.this, listDriverLocationsObject);
+                    listViewDriverLocations.setAdapter(adapter);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    public static double haversine(double lat1, double lng1, double lat2, double lng2) {
+
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLng = Math.toRadians(lng2 - lng1);
+        lat1 = Math.toRadians(lat1);
+        lat2 = Math.toRadians(lat2);
+
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.sin(dLng / 2) * Math.sin(dLng / 2) * Math.cos(lat1) * Math.cos(lat2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return 6371 * c;
+    }
+
+    public static boolean isWithinRadius(LatLng point, LatLng center,double radius) {
+        double distance = haversine(point.latitude, point.longitude, center.latitude, center.longitude);
+        return distance <= radius;
     }
 }

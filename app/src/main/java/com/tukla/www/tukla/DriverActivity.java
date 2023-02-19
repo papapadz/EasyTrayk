@@ -169,7 +169,7 @@ public class DriverActivity extends AppCompatActivity
         setContentView( R.layout.driver_activity_main );
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
+        //database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
 
 
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
@@ -246,26 +246,6 @@ public class DriverActivity extends AppCompatActivity
             }
         });
 
-//        DatabaseReference bookingsRef = database.getReference("bookings");
-//        bookingsRef.addValueEventListener(new ValueEventListener() {
-//            @Override
-//            public void onDataChange(DataSnapshot dataSnapshot) {
-//
-//                for (DataSnapshot bookingSnapshot: dataSnapshot.getChildren()) {
-//                    Booking booking = bookingSnapshot.getValue(Booking.class);
-//                    if(bookingSnapshot.getKey().equals(clickedBookingID)) {
-//
-//                    }
-//                }
-//            }
-//
-//            @Override
-//            public void onCancelled(DatabaseError databaseError) {
-//                // Handle any errors that may occur
-//            }
-//        });
-
-
         database.getReference().child("users").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -282,39 +262,8 @@ public class DriverActivity extends AppCompatActivity
 
             }
         });
-    }
 
-//    public void setToPassengerMap(String userID) {
-//
-//        FirebaseDatabase database = FirebaseDatabase.getInstance();
-//        DatabaseReference myRefSessions = database.getReference().child("sessions");
-//
-//        LatLngDefined driverLocation = new LatLngDefined( DriverActivity.this.latitude,DriverActivity.this.longitude);
-//        Session newSession = new Session(mAuth.getUid(),userID,clickedBookingID,LocalDateTime.now().toString(),driverLocation,false);
-//        sessionID = myRefSessions.push().getKey();
-//        myRefSessions.child(sessionID).setValue(newSession);
-//        targetDestination = new LatLng(
-//                hashMapBookings.get(clickedBookingID).getOrigin().getLatitude(),
-//                hashMapBookings.get(clickedBookingID).getOrigin().getLongitude()
-//        );
-//
-//        mMap.clear();
-//        passengerMarker = addMarker(
-//                new LatLng(
-//                        hashMapBookings.get(clickedBookingID).getOrigin().getLatitude(),
-//                        hashMapBookings.get(clickedBookingID).getOrigin().getLongitude()
-//                ), "Pick Up Point", 1);
-//
-//        passengerDestinationMarker = addMarker(
-//                new LatLng(
-//                        hashMapBookings.get(clickedBookingID).getDestination().getLatitude(),
-//                        hashMapBookings.get(clickedBookingID).getDestination().getLongitude()
-//                ), "Drop Off Point", 2);
-//
-//        Intent intent = new Intent(DriverActivity.this, FindPassenger.class);
-//        finish();
-//        startActivity(intent);
-//    }
+    }
 
     @Override
     protected void onStart() {
@@ -323,7 +272,6 @@ public class DriverActivity extends AppCompatActivity
         //mGoogleApiClient.connect();
         /** setup drawer **/
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
 
         View navHeader = navigationView.getHeaderView(0);
         CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
@@ -345,10 +293,14 @@ public class DriverActivity extends AppCompatActivity
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 User user = dataSnapshot.getValue(User.class);
                 TextView txtViewName = navHeader.findViewById(R.id.textView2);
-                txtViewName.setText(user.getFullname());
+                txtViewName.setText(user.getFullname()+" "+user.getLastname());
 
                 TextView txtViewEmail = navHeader.findViewById(R.id.textView);
                 txtViewEmail.setText(mAuth.getCurrentUser().getEmail());
+               // if(loggedInDriverObj==null) {
+                    DriverLocation driverLocation = new DriverLocation(user,new LatLngDefined(DriverActivity.this.latitude,DriverActivity.this.longitude),LocalDateTime.now().toString(),true);
+                    database.getReference().child("driverLocations").child(mAuth.getUid()).setValue(driverLocation);
+                //}
             }
 
             @Override
@@ -467,7 +419,7 @@ public class DriverActivity extends AppCompatActivity
             finish();
         } else if(id==nav_logOut) {
             //FirebaseAuth.getInstance().signOut();
-            //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
+            FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).child("isActive").setValue(false);
             Intent intent = new Intent(this, Login.class);
             startActivity(intent);
             finish();
@@ -620,7 +572,9 @@ public class DriverActivity extends AppCompatActivity
                     }
 
                     sessionsReference.child(sessionID).updateChildren(driverUpdates);
-                }
+                } else
+                    FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).child("location").setValue(new LatLngDefined(location.getLatitude(),location.getLongitude()));
+
             }
         });
 
@@ -691,6 +645,7 @@ public class DriverActivity extends AppCompatActivity
 
                     FirebaseDatabase database = FirebaseDatabase.getInstance();
                     DatabaseReference bookingsRef = database.getReference().child("bookings").child(clickedBookingID);
+                    database.getReference().child("driverLocations").child(mAuth.getUid()).child("isActive").setValue(false);
 
                     HashMap<String, Object> bookingUpdates = new HashMap<>();
                     bookingUpdates.put("isAccepted",true);
@@ -809,6 +764,7 @@ public class DriverActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 FirebaseDatabase.getInstance().getReference().child("bookings").child(clickedBookingID).child("isClicked").setValue(false);
+                FirebaseDatabase.getInstance().getReference().child("driverLocations").child(mAuth.getUid()).child("isActive").setValue(true);
                 mMap.clear();
                 layoutDetails.setVisibility(View.GONE);
                 addBookingsMarkers();
@@ -824,6 +780,7 @@ public class DriverActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 FirebaseDatabase.getInstance().getReference().child("bookings").child(clickedBookingID).child("isClicked").setValue(false);
+                FirebaseDatabase.getInstance().getReference().child("driverLocations").child(mAuth.getUid()).child("isActive").setValue(true);
                 PassengerDialog.dismiss();
             }
         });
@@ -1221,7 +1178,7 @@ public class DriverActivity extends AppCompatActivity
         String sensor = "sensor=false";
 
         // Building the parameters to the web service
-        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyBJfB6BWBgpsU-_EBtsZ3SiuYUDhz0sJJE"; //+ getString(R.string.google_maps_key);
+        String parameters = str_origin + "&" + str_dest + "&" + sensor + "&key=AIzaSyDNtPbtC0utrTJNz51MJPhC2290Byx51po"; //+ getString(R.string.google_maps_key);
 
         // Output format
         String output = "json";

@@ -88,6 +88,16 @@ public class Login extends AppCompatActivity implements Serializable {
                 attemptlogin();
             }
         });
+
+        Button backBtn = findViewById(R.id.buttonloginback);
+        backBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(Login.this, LandingActivity.class);
+                finish();
+                startActivity(intent);
+            }
+        });
     }
 
     private void attemptlogin() {
@@ -146,6 +156,7 @@ public class Login extends AppCompatActivity implements Serializable {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
+
                             //FirebaseUser firebaseUser = mAuth.getCurrentUser();
                             //UpdateUI(firebaseUser);
                             FirebaseDatabase database=FirebaseDatabase.getInstance();

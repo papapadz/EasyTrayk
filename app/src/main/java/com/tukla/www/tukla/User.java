@@ -11,6 +11,8 @@ public class User {
 
     private String userID;
     private String fullname;
+    private String middlename;
+    private String lastname;
     private String address;
     private String phone;
     private String idImgUrl;
@@ -20,6 +22,7 @@ public class User {
     private Boolean isAdmin;
     private Driver driver;
     private Boolean isRejected;
+    private String category;
 
     public User(){
     }
@@ -27,6 +30,8 @@ public class User {
     public User(
             String userID,
             String fullname,
+            String middlename,
+            String lastname,
             String address,
             String phone,
             Boolean isDriver,
@@ -34,7 +39,8 @@ public class User {
             String updatedAt,
             Boolean isAdmin,
             Driver driver,
-            Boolean isRejected) {
+            Boolean isRejected,
+            String category) {
 
         this.userID = userID;
         this.fullname = fullname;
@@ -46,6 +52,9 @@ public class User {
         this.isAdmin = isAdmin;
         this.driver = driver;
         this.isRejected = isRejected;
+        this.middlename = middlename;
+        this.lastname = lastname;
+        this.category = category;
     }
 
     public String getUserID() {
@@ -94,5 +103,17 @@ public class User {
 
     public Boolean getIsRejected() {
         return isRejected;
+    }
+
+    public String getMiddlename() {
+        return middlename;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public String getCategory() {
+        return category;
     }
 }

@@ -13,11 +13,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -27,8 +30,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -36,6 +42,8 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SignUp extends AppCompatActivity {
 
@@ -51,6 +59,10 @@ public class SignUp extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 1;
     private Bitmap IDBitmap;
     private Boolean isWithImg = false;
+    private EditText eMiddleName;
+    private EditText eLastName;
+    private AutoCompleteTextView eCategory;
+    private List<String> categoriesList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState)  {
@@ -67,8 +79,40 @@ public class SignUp extends AppCompatActivity {
         mpassword=findViewById(R.id.mpassword);
         mconfirmpassword=findViewById(R.id.mConfirmPassword);
         mButton=findViewById(R.id.button2);
+        eMiddleName=findViewById(R.id.eMiddleName);
+        eLastName=findViewById(R.id.eLastName);
         CheckBox showHideCheckBox1 = findViewById(R.id.show_hide_checkbox_1);
         CheckBox showHideCheckBox2 = findViewById(R.id.show_hide_checkbox_2);
+        eCategory = findViewById(R.id.eCategory);
+        Button buttonBack = findViewById(R.id.button3);
+
+        FirebaseDatabase.getInstance().getReference("categories").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                categoriesList.clear();
+                for (DataSnapshot categorySnapshot : dataSnapshot.getChildren()) {
+                    String categoryName = categorySnapshot.child("category").getValue(String.class);
+                    categoriesList.add(categoryName);
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(SignUp.this, android.R.layout.simple_dropdown_item_1line, categoriesList);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                eCategory.setAdapter(adapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SignUp.this, SignUpLanding.class);
+                startActivity(intent);
+                finish();
+            }
+        });
 
         showHideCheckBox1.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -99,11 +143,16 @@ public class SignUp extends AppCompatActivity {
                 mconfirmpassword.setSelection(mconfirmpassword.length());
             }
         });
+        LinearLayout linearLayout1 = findViewById(R.id.btnSignUpLinearLayout1);
+        LinearLayout linearLayout2 = findViewById(R.id.btnSignUpLinearLayout2);
 
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkEmailPassword(email_id.getText().toString(),mpassword.getText().toString());
+                if(checkEmailPassword(email_id.getText().toString(),mpassword.getText().toString())) {
+                    linearLayout1.setVisibility(View.GONE);
+                    linearLayout2.setVisibility(View.VISIBLE);
+                }
             }
         });
 
@@ -115,25 +164,51 @@ public class SignUp extends AppCompatActivity {
             }
         });
 
+        Button bntSubmit = findViewById(R.id.button4);
+        bntSubmit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(mpassword.getText().toString().length()<6)
+                {
+                    mpassword.requestFocus();
+                    mpassword.setError("Password must be at least 6 characters long");
+                }
+
+                else if(!mconfirmpassword.getText().toString().equals(mpassword.getText().toString()))
+                {
+                    mconfirmpassword.requestFocus();
+                    mconfirmpassword.setError("Password does not match");
+
+                }
+                else {
+                    registerUser(email_id.getText().toString(),mpassword.getText().toString());
+                }
+            }
+        });
+
     }
 
-    private void checkEmailPassword(String email, String password) {
+    private boolean checkEmailPassword(String email, String password) {
         email_id.setError(null);
         mpassword.setError(null);
 
 
             if(!isWithImg)
             {
-                Toast.makeText(getApplicationContext(), "ID is required!", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(), "Profile picture is required!", Toast.LENGTH_SHORT).show();
                 AlertDialog.Builder builder = new AlertDialog.Builder(SignUp.this);
-                builder.setTitle("ID is required!");
-                builder.setMessage("Please upload an image of your ID.");
+                builder.setTitle("Profile picture is required!");
+                builder.setMessage("Please upload an image of you.");
                 AlertDialog dialog = builder.create();
                 dialog.show();
             } else if(eFullName.getText().toString().equals(""))
             {
                 eFullName.requestFocus();
-                eFullName.setError("Enter Name");
+                eFullName.setError("Enter First Name");
+            } else if(eLastName.getText().toString().equals(""))
+            {
+                eLastName.requestFocus();
+                eLastName.setError("Enter Last Name");
             }
             else if(eAddress.getText().toString().equals(""))
             {
@@ -154,21 +229,13 @@ public class SignUp extends AppCompatActivity {
             {
                 email_id.requestFocus();
                 email_id.setError("Invalid Email");
-            } else if(password.length()<6)
-            {
-                mpassword.requestFocus();
-                mpassword.setError("Password must be at least 6 characters long");
-            }
+            } else if(!categoriesList.contains(eCategory.getText().toString())) {
+                eCategory.requestFocus();
+                eCategory.setError("Select from category list");
+            } else
+                return true;
 
-            else if(!mconfirmpassword.getText().toString().equals(password))
-            {
-                mconfirmpassword.requestFocus();
-                mconfirmpassword.setError("Password does not match");
-
-            }
-            else {
-                registerUser(email,password);
-            }
+            return false;
 
     }
 
@@ -182,20 +249,39 @@ public class SignUp extends AppCompatActivity {
 
                         if (task.isSuccessful()) {
                             dialog.dismiss();
-                            showErrorDailog("Succesfully Registered. Please Login");
+                            showErrorDailog("Successfully Registered. Please Login");
 
                             FirebaseUser firebaseUser = mAuth.getCurrentUser();
                             updateDatabase();
-                            UpdateUI(firebaseUser);
+                            sendEmailVerification(firebaseUser);
+                            //UpdateUI(firebaseUser);
                         } else {
                             dialog.dismiss();
-                            Toast.makeText(getApplicationContext(), "Unsuccesful registration", Toast.LENGTH_SHORT)
+                            Toast.makeText(getApplicationContext(), "Unsuccessful registration", Toast.LENGTH_SHORT)
                                     .show();
                             UpdateUI(null);
                         }
                     }
                 });
 
+    }
+
+    private void sendEmailVerification(FirebaseUser user) {
+        user.sendEmailVerification()
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            // Email verification sent successfully
+                            Toast.makeText(SignUp.this, "Email verification sent.",
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            // Email verification sending failed
+                            Toast.makeText(SignUp.this, "Failed to send email verification.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
     }
 
     private void updateDatabase() {
@@ -209,7 +295,7 @@ public class SignUp extends AppCompatActivity {
         } catch (Exception e) {
 
         } finally {
-            User user = new User(mAuth.getUid(),eFullName.getText().toString(),eAddress.getText().toString(),ePhoneNumber.getText().toString(),false, true, LocalDateTime.now().toString(),false,null,false);
+            User user = new User(mAuth.getUid(),eFullName.getText().toString(),eMiddleName.getText().toString(),eLastName.getText().toString(),eAddress.getText().toString(),ePhoneNumber.getText().toString(),false, true, LocalDateTime.now().toString(),false,null,false,eCategory.getText().toString());
             myRef.child(mAuth.getUid()).setValue(user);
         }
 

@@ -4,11 +4,17 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="8dp"
+    android:padding="20dp"
     tools:context=".SignUp"
-    android:background="@drawable/side_nav_bar"
     android:orientation="vertical">
 
+        <ImageView
+            android:layout_gravity="center"
+            android:layout_width="150sp"
+            android:layout_height="150sp"
+            android:src="@drawable/ic_launcher"
+            />
+        
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent">
@@ -18,106 +24,163 @@
                    android:layout_height="wrap_content"
                    android:orientation="vertical">
 
-                       <TextView
-                           android:textAlignment="center"
+                       <LinearLayout
+                           android:id="@+id/btnSignUpLinearLayout1"
                            android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           android:textSize="26dp"
-                           android:textStyle="bold"
-                           android:textColor="@color/white"
-                           android:text="SIGN UP"
-                           android:layout_marginBottom="10dp"/>
+                           android:layout_height="match_parent"
+                           android:orientation="vertical">
 
-                       <ImageView
-                           android:id="@+id/image_view"
-                           android:layout_width="80dp"
-                           android:layout_height="80dp"
-                           android:scaleType="centerCrop"
-                           android:layout_gravity="center"
-                           android:src="@drawable/ic_menu_camera" />
+                               <ImageView
+                                   android:tint="@color/colorPrimary"
+                                   android:id="@+id/image_view"
+                                   android:layout_width="80dp"
+                                   android:layout_height="80dp"
+                                   android:scaleType="centerCrop"
+                                   android:layout_gravity="center"
+                                   android:src="@drawable/ic_account_circle" />
 
-                       <TextView
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/person"
+                                   android:hint="Pangalan"
+                                   android:id="@+id/eFullName"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content" />
+
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/person"
+                                   android:hint="Pangitnang Apelyido"
+                                   android:id="@+id/eMiddleName"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content" />
+
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/person"
+                                   android:hint="Apelyido"
+                                   android:id="@+id/eLastName"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content" />
+
+
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/ic_home"
+                                   android:hint="Address"
+                                   android:id="@+id/eAddress"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content" />
+
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/ic_iphone"
+                                   android:hint="Numero ng selpon"
+                                   android:layout_gravity="center"
+                                   android:id="@+id/ePhoneNumber"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content" />
+
+                               <AutoCompleteTextView
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/ic_list"
+                                   android:hint="Kategorya"
+                                   android:id="@+id/eCategory"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content" />
+
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/ic_mail"
+                                   android:hint="Email Address"
+                                   android:layout_gravity="center"
+                                   android:id="@+id/eEmail"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
+                                   />
+
+                               <Button
+                                   android:layout_marginTop="10dp"
+                                   android:id="@+id/button2"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
+                                   android:background="@color/colorPrimary"
+                                   android:text="MAGREGISTRO"
+                                   android:textColor="#ffffff"
+                                   android:textSize="18dp"
+                                   android:textStyle="bold" />
+
+                               <Button
+                                   android:layout_marginTop="10dp"
+                                   android:id="@+id/button3"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
+                                   android:background="@color/green"
+                                   android:text="IKANSELA"
+                                   android:textColor="#ffffff"
+                                   android:textSize="18dp"
+                                   android:textStyle="bold" />
+
+                       </LinearLayout>
+                       <LinearLayout
+                           android:visibility="gone"
+                           android:id="@+id/btnSignUpLinearLayout2"
                            android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           android:text="Upload Profile Picture"
-                           android:textColor="#ffffff"
-                           android:textSize="18sp"
-                           android:textStyle="bold"
-                           android:typeface="sans"
-                           android:gravity="center" />
+                           android:layout_height="match_parent"
+                               android:orientation="vertical">
 
-                       <EditText
-                           android:layout_gravity="center"
-                           android:id="@+id/eFullName"
-                           android:hint="Full Name"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           />
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/ic_password"
+                                   android:hint="Ilagay and Password"
+                                   android:layout_gravity="center"
+                                   android:id="@+id/mpassword"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
 
-                       <EditText
-                           android:hint="Address"
-                           android:layout_gravity="center"
-                           android:id="@+id/eAddress"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           />
+                                   android:inputType="textPassword" />
+                               <CheckBox
+                                   android:id="@+id/show_hide_checkbox_1"
+                                   android:layout_width="wrap_content"
+                                   android:layout_height="wrap_content"
+                                   android:text="Show/Hide password"
+                                   android:textSize="10sp" />
 
-                       <EditText
-                           android:hint="Phone Number"
-                           android:layout_gravity="center"
-                           android:id="@+id/ePhoneNumber"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           />
+                               <EditText
+                                   android:drawableTint="@color/colorPrimary"
+                                   android:drawableStart="@drawable/ic_password"
+                                   android:hint="Kumpirmahin ang Password"
+                                   android:layout_gravity="center"
+                                   android:id="@+id/mConfirmPassword"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
 
-                       <EditText
-                           android:hint="Email"
-                           android:layout_gravity="center"
-                           android:id="@+id/eEmail"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           />
+                                   android:inputType="textPassword" />
+                               <CheckBox
+                                   android:id="@+id/show_hide_checkbox_2"
+                                   android:layout_width="wrap_content"
+                                   android:layout_height="wrap_content"
+                                   android:text="Show/Hide password"
+                                   android:textSize="10sp" />
 
-                       <EditText
-                           android:hint="Password"
-                           android:layout_gravity="center"
-                           android:id="@+id/mpassword"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
+                               <TextView
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
+                                   android:textSize="12sp"
+                                   android:text="Kaylangan maglagay ng walo o higit pang letra" />
 
-                           android:inputType="textPassword" />
-                       <CheckBox
-                           android:id="@+id/show_hide_checkbox_1"
-                           android:layout_width="wrap_content"
-                           android:layout_height="wrap_content"
-                           android:text="Show/Hide password"
-                           android:textSize="10sp" />
+                               <Button
+                                   android:layout_marginTop="10dp"
+                                   android:id="@+id/button4"
+                                   android:layout_width="match_parent"
+                                   android:layout_height="wrap_content"
+                                   android:background="@color/colorPrimary"
+                                   android:text="ISUBMIT"
+                                   android:textColor="#ffffff"
+                                   android:textSize="18dp"
+                                   android:textStyle="bold" />
 
-                       <EditText
-                           android:hint="Confirm Password"
-                           android:layout_gravity="center"
-                           android:id="@+id/mConfirmPassword"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-
-                           android:inputType="textPassword" />
-                       <CheckBox
-                           android:id="@+id/show_hide_checkbox_2"
-                           android:layout_width="wrap_content"
-                           android:layout_height="wrap_content"
-                           android:text="Show/Hide password"
-                           android:textSize="10sp" />
-
-                       <Button
-                           android:id="@+id/button2"
-                           android:layout_width="match_parent"
-                           android:layout_height="wrap_content"
-                           android:background="@color/blue"
-
-                           android:text="SignUP"
-                           android:textColor="#ffffff"
-                           android:textSize="18dp"
-                           android:textStyle="bold" />
+                       </LinearLayout>
 
                </LinearLayout>
 

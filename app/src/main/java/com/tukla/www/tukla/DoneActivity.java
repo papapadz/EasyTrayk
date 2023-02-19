@@ -6,9 +6,11 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -24,6 +26,7 @@ import java.util.Map;
 
 public class DoneActivity extends AppCompatActivity implements Serializable {
 
+    private int selectedRating = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,7 +39,6 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
         TextView locationEnd = findViewById(R.id.locationEnd);
         TextView distanceDone = findViewById(R.id.distanceDone);
         TextView paymentPassenger = findViewById(R.id.paymentPassenger);
-        EditText paymentDriver = findViewById(R.id.paymentDriver);
         Button btnConfirm = findViewById(R.id.btnConfirm);
         LinearLayout passengerLayout = findViewById(R.id.for_passenger_feedback);
         EditText feedback = findViewById(R.id.passenger_feedback);
@@ -46,6 +48,93 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
         String role = (String) getIntent().getSerializableExtra("ROLE");
 
         //FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        LinearLayout starRatingLayout = findViewById(R.id.star_rating_layout);
+        if(role.equals("DRIVER")) {
+            starRatingLayout.setVisibility(View.GONE);
+        } else {
+            ImageView star1 = findViewById(R.id.star1);
+            ImageView star2 = findViewById(R.id.star2);
+            ImageView star3 = findViewById(R.id.star3);
+            ImageView star4 = findViewById(R.id.star4);
+            ImageView star5 = findViewById(R.id.star5);
+
+            star1.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        star1.setImageResource(R.drawable.ic_star);
+                        star2.setImageResource(R.drawable.ic_star_border);
+                        star3.setImageResource(R.drawable.ic_star_border);
+                        star4.setImageResource(R.drawable.ic_star_border);
+                        star5.setImageResource(R.drawable.ic_star_border);
+                        selectedRating = 1;
+                    }
+                    return true;
+                }
+            });
+
+            star2.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        star1.setImageResource(R.drawable.ic_star);
+                        star2.setImageResource(R.drawable.ic_star);
+                        star3.setImageResource(R.drawable.ic_star_border);
+                        star4.setImageResource(R.drawable.ic_star_border);
+                        star5.setImageResource(R.drawable.ic_star_border);
+                        selectedRating = 2;
+                    }
+                    return true;
+                }
+            });
+
+            star3.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        star1.setImageResource(R.drawable.ic_star);
+                        star2.setImageResource(R.drawable.ic_star);
+                        star3.setImageResource(R.drawable.ic_star);
+                        star4.setImageResource(R.drawable.ic_star_border);
+                        star5.setImageResource(R.drawable.ic_star_border);
+                        selectedRating = 3;
+                    }
+                    return true;
+                }
+            });
+
+            star4.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        star1.setImageResource(R.drawable.ic_star);
+                        star2.setImageResource(R.drawable.ic_star);
+                        star3.setImageResource(R.drawable.ic_star);
+                        star4.setImageResource(R.drawable.ic_star);
+                        star5.setImageResource(R.drawable.ic_star_border);
+                        selectedRating = 4;
+                    }
+                    return true;
+                }
+            });
+
+            star5.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View view, MotionEvent motionEvent) {
+                    if (motionEvent.getAction() == MotionEvent.ACTION_DOWN) {
+                        star1.setImageResource(R.drawable.ic_star);
+                        star2.setImageResource(R.drawable.ic_star);
+                        star3.setImageResource(R.drawable.ic_star);
+                        star4.setImageResource(R.drawable.ic_star);
+                        star5.setImageResource(R.drawable.ic_star);
+                        selectedRating = 5;
+                    }
+                    return true;
+                }
+            });
+        }
+
+
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         database.getReference().child("bookings").child(bookingID).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -59,11 +148,9 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
                         if(sDataSnapshot.exists()) {
                             Session ssd = sDataSnapshot.getValue(Session.class);
                             if(role.equals("DRIVER")) {
+                                feedback.setVisibility(View.GONE);
                                 btnConfirm.setVisibility(View.VISIBLE);
-                                paymentDriver.setVisibility(View.VISIBLE);
-                                paymentPassenger.setVisibility(View.GONE);
                                 name.setText(booking.getUser().getFullname());
-                                paymentDriver.setText(booking.getFare()+"");
                             }
                             else {
 
@@ -102,7 +189,7 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
                                                 .child(booking.getBookingID()).setValue(
                                                 new History(
                                                         ss,
-                                                        Double.parseDouble(paymentDriver.getText().toString()),
+                                                        Double.parseDouble(paymentPassenger.getText().toString()),
                                                         LocalDateTime.now().toString()
                                                 )
                                         );
@@ -115,7 +202,7 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
                                         Map<String, Object> feedbackUpdates = new HashMap<>();
                                         feedbackUpdates.put("feedback", feedback.getText().toString());
                                         feedbackUpdates.put("updatedAt", LocalDateTime.now().toString());
-
+                                        feedbackUpdates.put("rating", selectedRating);
                                         database.getReference("feedbacks").child(booking.getBookingID()).updateChildren(feedbackUpdates);
 
                                         //FirebaseDatabase.getInstance().getReference("bookings").child(bookingID).removeValue();
@@ -140,5 +227,7 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
 
             }
         });
+
+
     }
 }

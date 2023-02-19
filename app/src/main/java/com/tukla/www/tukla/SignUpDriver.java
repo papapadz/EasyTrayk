@@ -13,11 +13,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.Log;
 import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -27,8 +31,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
@@ -36,6 +43,8 @@ import com.google.firebase.storage.UploadTask;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SignUpDriver extends AppCompatActivity {
 
@@ -48,15 +57,28 @@ public class SignUpDriver extends AppCompatActivity {
     private EditText mconfirmpassword;
     private EditText eToda;
     private EditText ePlateNumber;
+    private EditText eMiddleName;
+    private EditText eLastName;
+    private EditText eTricycleNumber;
     private Button mButton;
     private FirebaseAuth mAuth;
     private static final int PICK_PROF_PIC_REQUEST = 1;
     private static final int PICK_ID_REQUEST = 2;
     private Bitmap PICBitmap;
     private Bitmap IDBitmap;
+    private Bitmap franchiseBitmap;
+    private Bitmap motorBitmap;
+    private Bitmap tricycleBitmap;
     private ImageView imgLicense;
+    private ImageView imgFranchise;
+    private ImageView imgMotor;
+    private ImageView imgTricycle;
     private Boolean isWithProfPic=false;
     private Boolean isWithLicense=false;
+    private Boolean isWithFranchise=false;
+    private Boolean isWithMotor=false;
+    private Boolean isWithTricycle=false;
+    private List<String> categoriesList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,14 +89,50 @@ public class SignUpDriver extends AppCompatActivity {
         eFullName=findViewById(R.id.eFullName);
         eAddress=findViewById(R.id.eAddress);
         ePhoneNumber=findViewById(R.id.ePhoneNumber);
+        eMiddleName=findViewById(R.id.eMiddleName);
+        eLastName=findViewById(R.id.eLastName);
+        eTricycleNumber=findViewById(R.id.eTricycleNumber);
         imgViewId=findViewById(R.id.image_view);
         email_id=findViewById(R.id.eEmail);
         mpassword=findViewById(R.id.mpassword);
         mconfirmpassword=findViewById(R.id.mConfirmPassword);
-        eToda=findViewById(R.id.eToda);
+        //eToda=findViewById(R.id.eToda);
         ePlateNumber=findViewById(R.id.ePlateNumber);
         mButton=findViewById(R.id.button2);
         imgLicense=findViewById(R.id.img_license);
+        imgFranchise=findViewById(R.id.img_franchise);
+        imgMotor=findViewById(R.id.img_motor);
+        imgTricycle=findViewById(R.id.img_tricycle);
+        Button buttonBack = findViewById(R.id.button3);
+        AutoCompleteTextView eToda = findViewById(R.id.todaAutocomplete);
+
+        FirebaseDatabase.getInstance().getReference("todaList").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                categoriesList.clear();
+                for (DataSnapshot categorySnapshot : dataSnapshot.getChildren()) {
+                    String categoryName = categorySnapshot.child("name").getValue(String.class);
+                    categoriesList.add(categoryName);
+                }
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(SignUpDriver.this, android.R.layout.simple_dropdown_item_1line, categoriesList);
+                adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+                eToda.setAdapter(adapter);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        buttonBack.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SignUpDriver.this, SignUpLanding.class);
+                startActivity(intent);
+                finish();
+            }
+        });
         CheckBox showHideCheckBox1 = findViewById(R.id.show_hide_checkbox_1);
         CheckBox showHideCheckBox2 = findViewById(R.id.show_hide_checkbox_2);
 
@@ -111,7 +169,7 @@ public class SignUpDriver extends AppCompatActivity {
         mButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                checkEmailPassword(email_id.getText().toString(),mpassword.getText().toString());
+                checkPassword();
             }
         });
 
@@ -119,7 +177,7 @@ public class SignUpDriver extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent pickImageIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(pickImageIntent, PICK_PROF_PIC_REQUEST);
+                startActivityForResult(pickImageIntent, 101);
             }
         });
 
@@ -127,75 +185,125 @@ public class SignUpDriver extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent pickImageIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                startActivityForResult(pickImageIntent, PICK_ID_REQUEST);
+                startActivityForResult(pickImageIntent, 102);
             }
         });
 
+        imgFranchise.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent pickImageIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(pickImageIntent, 103);
+            }
+        });
+
+        imgMotor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent pickImageIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(pickImageIntent, 104);
+            }
+        });
+
+        imgTricycle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent pickImageIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+                startActivityForResult(pickImageIntent, 105);
+            }
+        });
+
+        LinearLayout linearLayout1 = findViewById(R.id.signupDriverLinearLayout1);
+        LinearLayout linearLayout2 = findViewById(R.id.signupDriverLinearLayout2);
+        Button btnNext = findViewById(R.id.button4);
+        btnNext.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                if(checkEmailPassword(email_id.getText().toString(),mpassword.getText().toString())) {
+                    linearLayout1.setVisibility(View.GONE);
+                    linearLayout2.setVisibility(View.VISIBLE);
+                }
+            }
+        });
     }
 
-    private void checkEmailPassword(String email, String password) {
+    private void checkPassword() {
+        if(mpassword.getText().toString().length()<8)
+        {
+            mpassword.requestFocus();
+            mpassword.setError("Password must be atleast 8 characters long");
+        } else if(!mconfirmpassword.getText().toString().equals(mpassword.getText().toString()))
+        {
+            mconfirmpassword.requestFocus();
+            mconfirmpassword.setError("Password does not match");
+        } else{
+            registerUser(email_id.getText().toString(),mpassword.getText().toString());
+        }
+    }
+
+    private boolean checkEmailPassword(String email, String password) {
         email_id.setError(null);
         mpassword.setError(null);
-
         if(!isWithProfPic) {
-            showErrorDailog("Image is required!", 0);
+            showErrorDailog("Profile Picture is required!", 0);
             imgViewId.requestFocus();
-        } else if(!isWithLicense) {
-            showErrorDailog("License ID is required!", 0);
-            imgLicense.requestFocus();
-
-        } else if(!email.contains("@"))
+        } else if(eFullName.getText().toString().equals(""))
+        {
+            eFullName.requestFocus();
+            eFullName.setError("First name cannot be empty");
+        } else if(eLastName.getText().toString().equals(""))
+        {
+            eLastName.requestFocus();
+            eLastName.setError("Last name cannot be empty");
+        } else if(eAddress.getText().toString().equals(""))
+        {
+            eAddress.requestFocus();
+            eAddress.setError("Address cannot be empty");
+        }  else if(!email.contains("@"))
         {
             email_id.requestFocus();
             email_id.setError("INVALID EMAIL");
+        } else if(ePhoneNumber.getText().toString().equals(""))
+        {
+            ePhoneNumber.requestFocus();
+            ePhoneNumber.setError("Phone Number cannot be empty");
         }
-        else{
-
-            if(password.length()<6)
-            {
-                mpassword.requestFocus();
-                mpassword.setError("Password must be atleast 6 characters long");
-            }
-
-            else if(!mconfirmpassword.getText().toString().equals(password))
-            {
-                mconfirmpassword.requestFocus();
-                mconfirmpassword.setError("Password does not match");
-
-
-            }
-            else if(eAddress.getText().toString().equals(""))
-            {
-                eAddress.requestFocus();
-                eAddress.setError("Address cannot be empty");
-            }
-            else if(ePhoneNumber.getText().toString().equals(""))
-            {
-                ePhoneNumber.requestFocus();
-                ePhoneNumber.setError("Phone Number cannot be empty");
-            }
-            else if(ePhoneNumber.getText().toString().length()>11)
-            {
-                ePhoneNumber.requestFocus();
-                ePhoneNumber.setError("Phone Number must be 11 numbers long only");
-            }
-            else if(eToda.getText().toString().equals(""))
-            {
-                eToda.requestFocus();
-                eToda.setError("Toda cannot be empty");
-            }
-            else if(ePlateNumber.getText().toString().equals(""))
-            {
-                ePlateNumber.requestFocus();
-                ePlateNumber.setError("Plate Number cannot be empty");
-            }
-
-            else{
-                registerUser(email,password);
-            }
-
+        else if(ePhoneNumber.getText().toString().length()>11)
+        {
+            ePhoneNumber.requestFocus();
+            ePhoneNumber.setError("Phone Number must be 11 numbers long only");
         }
+        else if(!categoriesList.contains(eToda.getText().toString()))
+        {
+            eToda.requestFocus();
+            eToda.setError("No TODA found!");
+        }
+        else if(ePlateNumber.getText().toString().equals(""))
+        {
+            ePlateNumber.requestFocus();
+            ePlateNumber.setError("Plate Number cannot be empty");
+        }
+        else if(eTricycleNumber.getText().toString().equals(""))
+        {
+            eTricycleNumber.requestFocus();
+            eTricycleNumber.setError("Tricycle Number cannot be empty");
+        } else if(!isWithLicense) {
+                showErrorDailog("License is required!", 0);
+                imgLicense.requestFocus();
+            } else if(!isWithFranchise) {
+                showErrorDailog("Franchise is required!", 0);
+                imgFranchise.requestFocus();
+            } else if(!isWithMotor) {
+                showErrorDailog("Picture of motorcycle is required!", 0);
+                imgMotor.requestFocus();
+            } else if(!isWithTricycle) {
+                showErrorDailog("Picture of Tricycle is required!", 0);
+                imgTricycle.requestFocus();
+            } else
+                return true;
 
+        return false;
     }
 
     private void registerUser(String email,String password) {
@@ -208,13 +316,14 @@ public class SignUpDriver extends AppCompatActivity {
 
                         if (task.isSuccessful()) {
                             dialog.dismiss();
-                            showErrorDailog("Succesfully Registered. Once the Admin verifies your account, you can now log in. Thank you!",1);
+                            showErrorDailog("Successfully Registered. Please check your email for verification",1);
                             FirebaseUser firebaseUser = mAuth.getCurrentUser();
                             updateDatabase();
                             //UpdateUI(firebaseUser);
+                            sendEmailVerification(firebaseUser);
                         } else {
                             dialog.dismiss();
-                            Toast.makeText(getApplicationContext(), "Unsuccesful registration", Toast.LENGTH_SHORT)
+                            Toast.makeText(getApplicationContext(), "Unsuccessful registration", Toast.LENGTH_SHORT)
                                     .show();
                             //UpdateUI(null);
                         }
@@ -228,14 +337,17 @@ public class SignUpDriver extends AppCompatActivity {
         try {
             uploadFirebase(IDBitmap,"licenses");
             uploadFirebase(PICBitmap,"images");
+            uploadFirebase(franchiseBitmap,"franchises");
+            uploadFirebase(motorBitmap,"motors");
+            uploadFirebase(tricycleBitmap,"tricycles");
         } catch (Exception e) {
 
         } finally {
             FirebaseDatabase database = FirebaseDatabase.getInstance();
 
             DatabaseReference myRefUsers = database.getReference("users");
-            Driver driver = new Driver(eToda.getText().toString(),ePlateNumber.getText().toString());
-            User user = new User(mAuth.getUid(),eFullName.getText().toString(),eAddress.getText().toString(),ePhoneNumber.getText().toString(),true, false, LocalDateTime.now().toString(),false, driver,false);
+            Driver driver = new Driver(eToda.getText().toString(),ePlateNumber.getText().toString(),eTricycleNumber.getText().toString());
+            User user = new User(mAuth.getUid(),eFullName.getText().toString(),eMiddleName.getText().toString(),eLastName.getText().toString(),eAddress.getText().toString(),ePhoneNumber.getText().toString(),true, false, LocalDateTime.now().toString(),false, driver,false,"None");
             myRefUsers.child(mAuth.getUid()).setValue(user);
 
 
@@ -262,37 +374,73 @@ public class SignUpDriver extends AppCompatActivity {
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
     }
+
+    private void sendEmailVerification(FirebaseUser user) {
+        user.sendEmailVerification()
+                .addOnCompleteListener(this, new OnCompleteListener<Void>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Void> task) {
+                        if (task.isSuccessful()) {
+                            // Email verification sent successfully
+                            Toast.makeText(SignUpDriver.this, "Email verification sent.",
+                                    Toast.LENGTH_SHORT).show();
+                        } else {
+                            // Email verification sending failed
+                            Toast.makeText(SignUpDriver.this, "Failed to send email verification.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+
     private void UpdateUI(Object o) {
     }
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_ID_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+        if (resultCode == RESULT_OK && data != null && data.getData() != null) {
             Uri filePath = data.getData();
             try {
                 //getting bitmap object from uri
                 Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
                 //setting the image to imageview
-                imgLicense.setImageBitmap(bitmap);
+                switch (requestCode) {
+                    case 101:
+                        imgViewId.setImageTintList(null);
+                        imgViewId.setImageBitmap(bitmap);
+                        PICBitmap = bitmap;
+                        isWithProfPic=true;
+                        break;
+                    case 102:
+                        imgLicense.setImageTintList(null);
+                        imgLicense.setImageBitmap(bitmap);
+                        IDBitmap = bitmap;
+                        isWithLicense=true;
+                        break;
+                    case 103:
+                        imgFranchise.setImageTintList(null);
+                        imgFranchise.setImageBitmap(bitmap);
+                        franchiseBitmap = bitmap;
+                        isWithFranchise=true;
+                        break;
+                    case 104:
+                        imgMotor.setImageTintList(null);
+                        imgMotor.setImageBitmap(bitmap);
+                        motorBitmap = bitmap;
+                        isWithMotor=true;
+                        break;
+                    case 105:
+                        imgTricycle.setImageTintList(null);
+                        imgTricycle.setImageBitmap(bitmap);
+                        tricycleBitmap = bitmap;
+                        isWithTricycle=true;
+                        break;
+                }
+
                 // uploading the image to firebase
                 //uploadFirebase(bitmap);
-                IDBitmap = bitmap;
-                isWithProfPic=true;
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else if (requestCode == PICK_PROF_PIC_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            Uri filePath = data.getData();
-            try {
-                //getting bitmap object from uri
-                Bitmap bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), filePath);
-                //setting the image to imageview
-                imgViewId.setImageBitmap(bitmap);
-                // uploading the image to firebase
-                //uploadFirebase(bitmap);
-                PICBitmap = bitmap;
-                isWithLicense=true;
+
             } catch (IOException e) {
                 e.printStackTrace();
             }

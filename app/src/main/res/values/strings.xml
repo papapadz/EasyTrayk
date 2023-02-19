@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">EasyTrayk</string>
+    <string name="app_name">Tri-Sakay</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
@@ -25,4 +25,26 @@
     <string name="hello_first_fragment">Hello first fragment</string>
     <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
     <string name="title_activity_rejected">RejectedActivity</string>
+    <string name="title_activity_login1">LoginActivity1</string>
+    <string name="prompt_email">Email</string>
+    <string name="prompt_password">Password</string>
+    <string name="action_sign_in">Sign in or register</string>
+    <string name="action_sign_in_short">Sign in</string>
+    <string name="welcome">"Welcome !"</string>
+    <string name="invalid_username">Not a valid username</string>
+    <string name="invalid_password">Password must be >5 characters</string>
+    <string name="login_failed">Login failed</string>
+    <string name="terms_and_conditions">
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Maecenas ut nunc dictum, tempus augue eu, pulvinar neque. Praesent vel tempus lacus. Sed sit amet justo accumsan justo feugiat hendrerit. Maecenas et imperdiet sapien. In non maximus felis, cursus semper erat. Morbi sit amet velit vitae lorem sollicitudin tincidunt at ut tellus. Pellentesque consectetur vel odio vel commodo. Maecenas eget tortor purus. Integer placerat neque eu arcu feugiat, sed molestie elit facilisis. Vestibulum consequat aliquam nisl nec semper.
+
+Cras bibendum dui in tellus pulvinar, sed euismod ante viverra. Ut et dui ex. Aliquam egestas lobortis nisl, vitae pulvinar ipsum tincidunt sed. Sed in arcu augue. Vestibulum interdum neque sed mauris ullamcorper, non tempor est convallis. Curabitur volutpat iaculis felis, ac efficitur est pretium eu. Sed ultricies justo sit amet semper molestie. Sed non leo tempus mauris posuere cursus.
+
+Vivamus est nulla, euismod quis neque vitae, mollis ornare libero. Interdum et malesuada fames ac ante ipsum primis in faucibus. Duis fringilla semper nisl ut interdum. Curabitur mi neque, facilisis eu porttitor quis, ornare ut diam. Nam vehicula mollis tellus, non vehicula leo rhoncus ut. Nunc tempor neque sit amet lacus euismod fermentum. Vivamus posuere risus non mi dictum aliquet. Nunc dapibus magna justo, ut imperdiet nisi molestie at. Aenean a lectus mollis, consequat massa vehicula, tristique orci. Cras orci libero, varius quis tempor at, viverra sed nibh. Phasellus molestie sed justo nec posuere. Etiam id rhoncus neque, tristique aliquam sapien.
+
+Vestibulum magna leo, pellentesque ut ornare at, consequat non lectus. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Nullam dignissim vitae dui eget auctor. Morbi sit amet tincidunt ex. Vestibulum nisi tellus, gravida at mattis vel, dignissim eget risus. Quisque imperdiet, neque ut tempor consectetur, ante ipsum viverra orci, non auctor purus diam a risus. Nam sagittis pretium fringilla. Maecenas cursus dignissim facilisis. Donec sit amet bibendum quam, non laoreet nulla.
+
+Curabitur porta gravida ante, non lacinia urna egestas consequat. Mauris maximus lacus vel lorem bibendum, id rhoncus turpis interdum. In tellus lacus, ultrices eu mi vel, semper faucibus neque. Donec luctus ante sapien, et blandit lacus tristique sit amet. Sed sit amet scelerisque neque. Praesent diam magna, consectetur vitae vulputate sed, pellentesque ac nunc. Aliquam erat volutpat. Suspendisse a imperdiet risus. Fusce placerat massa maximus, consectetur dolor eu, tempor ex. Nulla id dui iaculis, lobortis ante vitae, faucibus sem. Cras venenatis volutpat ligula, eget consequat mauris lacinia quis. Curabitur venenatis lacus augue, non mollis sem eleifend molestie. In dapibus luctus pharetra.
+    </string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

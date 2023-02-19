@@ -2,42 +2,40 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <group android:checkableBehavior="single">
-        <!--        <item-->
-        <!--            android:id="@+id/nav_camera"-->
-        <!--            android:icon="@drawable/ic_menu_camera"-->
-        <!--            android:title="Import" />-->
-        <!--        <item-->
-        <!--            android:id="@+id/nav_gallery"-->
-        <!--            android:icon="@drawable/ic_menu_gallery"-->
-        <!--            android:title="Gallery" />-->
-        <!--        <item-->
-        <!--            android:id="@+id/nav_slideshow"-->
-        <!--            android:icon="@drawable/ic_menu_slideshow"-->
-        <!--            android:title="Slideshow" />-->
-
         <item
             android:id="@+id/nav_user_list"
-            android:icon="@drawable/check_box"
-            android:title="For verification" />
+            android:icon="@drawable/ic_users"
+            android:title="Mga User" />
 
         <item
-            android:id="@+id/nav_admin_history"
-            android:icon="@drawable/ic_history_black_48dp"
-            android:title="History" />
+            android:id="@+id/nav_toda_list"
+            android:icon="@drawable/ic_list"
+            android:title="Listahan ng TODA" />
 
+        <item
+            android:id="@+id/nav_terms_conditions_list"
+            android:icon="@drawable/ic_checklist"
+            android:title="Mga Kondisyon" />
+
+        <item
+            android:id="@+id/nav_price_list"
+            android:icon="@drawable/ic_payment"
+            android:title="Pamasahe" />
+
+        <item
+            android:id="@+id/nav_rating_list"
+            android:icon="@drawable/ic_star"
+            android:title="Mga Rating" />
+
+        <item
+            android:id="@+id/nav_support"
+            android:icon="@drawable/ic_payment"
+            android:title="Pamasahe" />
+
+        <item
+            android:id="@+id/nav_logOut"
+            android:icon="@drawable/ic_logout"
+            android:title="Log Out" />
     </group>
-
-    <item android:title="Settings">
-        <menu>
-            <!--            <item-->
-            <!--                android:id="@+id/nav_share"-->
-            <!--                android:icon="@drawable/ic_menu_share"-->
-            <!--                android:title="Share" />-->
-            <item
-                android:id="@+id/nav_logOut"
-                android:icon="@drawable/ic_close_black_48dp"
-                android:title="Log Out" />
-        </menu>
-    </item>
 
 </menu>

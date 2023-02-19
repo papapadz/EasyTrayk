@@ -4,6 +4,7 @@ public class Driver {
 
     private String toda;
     private String plateNumber;
+    private String tricycleNumber;
 
     public Driver() {
 
@@ -11,10 +12,12 @@ public class Driver {
 
     public Driver(
             String toda,
-            String plateNumber) {
+            String plateNumber,
+            String tricycleNumber) {
 
         this.toda = toda;
         this.plateNumber = plateNumber;
+        this.tricycleNumber = tricycleNumber;
     }
 
     public String getToda() {
@@ -23,6 +26,10 @@ public class Driver {
 
     public String getPlateNumber() {
         return this.plateNumber;
+    }
+
+    public String getTricycleNumber() {
+        return this.tricycleNumber;
     }
 
 }

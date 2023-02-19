@@ -1,11 +1,10 @@
 package com.tukla.www.tukla;
 
-import static com.tukla.www.tukla.R.id.nav_logOut;
-
 import android.content.Intent;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -16,6 +15,8 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
@@ -39,20 +40,17 @@ import de.hdodenhof.circleimageview.CircleImageView;
 
 public class AdminActivity extends AppCompatActivity implements NavigationView.OnNavigationItemSelectedListener {
 
-    private List<User> listUsers = new ArrayList<>();
     private FirebaseAuth mAuth;
-    private ListView listView;
-    private EditText userSearch;
-    private UserListAdapter adapter;
-    private List<User> tempUser = new ArrayList<>();
+    private FragmentManager fragmentManager;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_admin);
+
+        fragmentManager = getSupportFragmentManager();
+
         mAuth = FirebaseAuth.getInstance();
-        listView = findViewById(R.id.list_user);
-        userSearch = findViewById(R.id.user_search);
-        userSearch.setVisibility(View.GONE);
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
 
@@ -64,64 +62,11 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
 
         NavigationView navigationView = (NavigationView) findViewById( R.id.nav_admin_view );
         navigationView.setNavigationItemSelectedListener( this );
-        //drawer.findViewById(R.id.nav_user_lists).setVisibility(View.VISIBLE);
-        //navigationView.findViewById(R.id.nav_book).setVisibility(View.GONE);
-        //navigationView.findViewById(R.id.nav_history).setVisibility(View.GONE);
+
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference usersRef = database.getReference("users");
-        usersRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                listUsers.clear();
-                for (DataSnapshot userSnapshot : dataSnapshot.getChildren()) {
-                    User user = userSnapshot.getValue(User.class);
-                    if(user.getIsDriver() && (!user.getIsVerified() || user.getIsRejected()))
-                        listUsers.add(user);
-                }
-                adapter = new UserListAdapter(AdminActivity.this, listUsers);
-                listView.setAdapter(adapter);
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError databaseError) {
-
-            }
-        });
-
-        userSearch.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                adapter.search(s.toString());
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {
-
-            }
-        });
         /** setup drawer **/
         database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
-
         View navHeader = navigationView.getHeaderView(0);
-        //CircleImageView profImg = navHeader.findViewById(R.id.profile_image);
-
-//        StorageReference storageRef = FirebaseStorage.getInstance().getReference();
-//        StorageReference imgRef = storageRef.child("images/"+mAuth.getUid()+".jpg");
-//        imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-//            @Override
-//            public void onSuccess(Uri uri) {
-//                Glide.with(profImg.getContext())
-//                        .load(uri)
-//                        .fitCenter()
-//                        .into(profImg);
-//            }
-//        });
-
         database.getReference("users").child(mAuth.getUid()).addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -139,6 +84,8 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
             }
         });
         /** */
+
+        showHomeFragment();
     }
 
     @Override
@@ -146,25 +93,57 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
         // Handle navigation view item clicks here.
         int id = menuItem.getItemId();
 
-        if(id==R.id.nav_user_list) {
-            //Intent intent = new Intent(this, AdminActivity.class);
-            //finish();
-            //startActivity(intent);
-            return false;
-        } else if(id==R.id.nav_admin_history) {
-            //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
-            Intent intent = new Intent(this, AdminHistory.class);
-            intent.putExtra("ROLE","ADMIN");
-            startActivity(intent);
-            finish();
-        } else if(id==nav_logOut) {
-            //FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(this, Login.class);
-            finish();
-            startActivity(intent);
+        switch (menuItem.getItemId()) {
+            case R.id.nav_user_list:
+                showHomeFragment();
+                break;
+            case R.id.nav_toda_list:
+                AdminTodaList todaListFragment = new AdminTodaList();
+                fragmentManager.beginTransaction().replace(R.id.fragment_container,todaListFragment).commit();
+                break;
+            case R.id.nav_terms_conditions_list:
+                break;
+            case R.id.nav_price_list:
+                break;
+            case R.id.nav_rating_list:
+                AdminHistoryFragment historyListFragment = new AdminHistoryFragment();
+                fragmentManager.beginTransaction().replace(R.id.fragment_container,historyListFragment).commit();
+                break;
+            case R.id.nav_support:
+                break;
+            case R.id.nav_logOut:
+                Intent intent = new Intent(this, Login.class);
+                finish();
+                startActivity(intent);
+                break;
         }
+
+//        if(id==R.id.nav_user_list) {
+//            showHomeFragment();
+//        } else if(id==nav_toda_list) {
+//
+//        } else if(id==nav_terms_conditions_list) {
+//
+//        } else if(id==nav_price_list) {
+//
+//        } else if(id==R.id.nav_rating_list) {
+//            AdminHistoryFragment historyListFragment = new AdminHistoryFragment();
+//            fragmentManager.beginTransaction().replace(R.id.fragment_container,historyListFragment).commit();
+//        } else if(id==nav_terms_conditions_list) {
+//
+//        } else if(id==nav_logOut) {
+//            //FirebaseAuth.getInstance().signOut();
+//            Intent intent = new Intent(this, Login.class);
+//            finish();
+//            startActivity(intent);
+//        }
         DrawerLayout drawer = (DrawerLayout) findViewById( R.id.admin_drawer_layout );
         drawer.closeDrawer( GravityCompat.START );
         return true;
+    }
+
+    public void showHomeFragment() {
+        AdminUserListFragment adminUserListFragment = new AdminUserListFragment();
+        fragmentManager.beginTransaction().replace(R.id.fragment_container,adminUserListFragment).commit();
     }
 }
