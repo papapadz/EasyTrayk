@@ -7,7 +7,10 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Spinner;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -33,7 +36,8 @@ public class AdminUserListFragment extends Fragment {
     private String mParam1;
     private String mParam2;
     private List<User> listUser = new ArrayList<>();
-
+    private int filterCode = 1;
+    private ListView listView;
     public AdminUserListFragment() {
         // Required empty public constructor
     }
@@ -70,19 +74,52 @@ public class AdminUserListFragment extends Fragment {
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_admin_user_list, container, false);
-        ListView listView = view.findViewById(R.id.adminListUser);
+        listView = view.findViewById(R.id.adminListUser);
 
-        FirebaseDatabase.getInstance().getReference("history").addValueEventListener(new ValueEventListener() {
+        String[] spinnerItems = {"Pending Registrations","Drivers","Passengers"};
+        Spinner spinnerCategory = view.findViewById(R.id.spinnerUserFilter);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_spinner_item, spinnerItems);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCategory.setAdapter(adapter);
+
+        spinnerCategory.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                filter(i);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
+
+        return view;
+    }
+
+    public void filter(int i) {
+        listUser.clear();
+        FirebaseDatabase.getInstance().getReference("users").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                listUser.clear();
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
                     User user = snapshot.getValue(User.class);
-                    //if(!user.getIsVerified() || user.getIsRejected())
-                        listUser.add(user);
+                    switch (i) {
+                        case 0:
+                            if(!user.getIsVerified() || user.getIsRejected())
+                                listUser.add(user);
+                            break;
+                        case 1:
+                            if(user.getIsDriver() && !user.getIsAdmin() && user.getIsVerified())
+                                listUser.add(user);
+                            break;
+                        case 2:
+                            if(!user.getIsDriver() && !user.getIsAdmin() && user.getIsVerified())
+                                listUser.add(user);
+                            break;
+                    }
                 }
-                if(listUser.size()==0)
-                    Log.d("TAG LIST USER",listUser.toString());
                 UserListAdapter adapter = new UserListAdapter(getActivity(), listUser);
                 listView.setAdapter(adapter);
             }
@@ -92,7 +129,5 @@ public class AdminUserListFragment extends Fragment {
 
             }
         });
-
-        return view;
     }
 }

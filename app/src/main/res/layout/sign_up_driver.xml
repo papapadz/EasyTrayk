@@ -42,6 +42,13 @@
                     android:layout_gravity="center"
                     android:src="@drawable/ic_account_circle" />
 
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorPrimary"
+                    android:text="Profile Picture"
+                    android:gravity="center"/>
+
                 <EditText
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/person"
@@ -75,6 +82,8 @@
                     android:layout_height="wrap_content" />
 
                 <EditText
+                    android:maxLength="11"
+                    android:inputType="phone"
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/ic_iphone"
                     android:hint="Numero ng selpon"

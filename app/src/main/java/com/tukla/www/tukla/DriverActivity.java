@@ -6,6 +6,7 @@ import static com.tukla.www.tukla.R.id.nav_profile;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.LoaderManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -39,8 +40,10 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +76,7 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -129,6 +133,7 @@ public class DriverActivity extends AppCompatActivity
     TextView txtOrigin;
     TextView priceText;
     TextView distanceText;
+    TextView numPassengerText;
     Map<String, Booking> hashMapBookings;
     private FirebaseAuth mAuth;
     private final String CODE_CANCEL = "Cancel";
@@ -153,7 +158,10 @@ public class DriverActivity extends AppCompatActivity
     AlertDialog.Builder waitBuilder;
     AlertDialog waitDialog;
     AlertDialog PassengerDialog;
-
+    ArrayList<Message> messageArrayList = new ArrayList<>();
+    private ListView listViewChatBox;
+    private boolean isChatListening = false;
+    Button chat_button;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
@@ -198,6 +206,7 @@ public class DriverActivity extends AppCompatActivity
 
         priceText = (TextView) findViewById(R.id.price_text);
         distanceText = (TextView) findViewById(R.id.distance_text);
+        numPassengerText = findViewById(R.id.numPassengerTxt);
 
         book_button=(Button)findViewById(R.id.book_button);
         book_button.setText(CODE_CANCEL);
@@ -220,7 +229,7 @@ public class DriverActivity extends AppCompatActivity
                     startActivity( intent );
                 } else if(book_button.getText().toString().equals(CODE_CANCEL)) {
                     Toast.makeText(getBaseContext(), "Passenger just cancelled your this booking, find again.", Toast.LENGTH_SHORT).show();
-
+                    isChatListening = false;
                     mMap.clear();
                     layoutDetails.setVisibility(View.GONE);
 
@@ -263,6 +272,39 @@ public class DriverActivity extends AppCompatActivity
             }
         });
 
+        chat_button = findViewById(R.id.chat_button);
+        chat_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Create the chat dialog box
+                Dialog chatDialog = new Dialog(DriverActivity.this);
+                chatDialog.setContentView(R.layout.chat_dialog);
+
+                // Get references to the views in the chat dialog box
+                listViewChatBox = chatDialog.findViewById(R.id.list_view_chat);
+                EditText editText = chatDialog.findViewById(R.id.edit_text_chat);
+                Button sendButton = chatDialog.findViewById(R.id.button_send_chat);
+
+                sendButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Message message = new Message(loggedInDriverObj,thisSession.getBooking().getUser(),editText.getText().toString(),LocalDateTime.now().toString());
+                        String key = FirebaseDatabase.getInstance().getReference("messages").push().getKey();
+                        FirebaseDatabase.getInstance().getReference("messages").child(thisSession.getBooking().getBookingID()).child(key).setValue(message);
+                        editText.setText("");
+                    }
+                });
+
+                if(isPassengerAccept && !isChatListening) {
+                    MessageAdapter messageAdapter = new MessageAdapter(DriverActivity.this, messageArrayList);
+                    listViewChatBox.setAdapter(messageAdapter);
+
+                    listenToChat();
+                }
+
+                chatDialog.show();
+            }
+        });
     }
 
     @Override
@@ -317,30 +359,7 @@ public class DriverActivity extends AppCompatActivity
         if (drawer.isDrawerOpen( GravityCompat.START )) {
             drawer.closeDrawer( GravityCompat.START );
         } else {
-            super.onBackPressed();
-            AlertDialog.Builder builder = new AlertDialog.Builder(DriverActivity.this);
-            builder.setTitle("Sign out?");
-            builder.setMessage("You have pressed back button. Are you signing out?");
-            AlertDialog dialog = builder.create();
-
-            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // Do something when the OK button is clicked
-                    dialog.dismiss();
-                    FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
-                    Intent intent =new Intent(DriverActivity.this,Login.class);
-                    finish();
-                    startActivity(intent);
-                }
-            });
-
-            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
+            drawer.openDrawer( GravityCompat.START );
         }
     }
 
@@ -521,6 +540,7 @@ public class DriverActivity extends AppCompatActivity
                 txtDropOff.setText(booking.getDestinationText());
                 priceText.setText(booking.getFare()+"");
                 distanceText.setText(booking.getDistance()+"");
+                numPassengerText.setText(booking.getNumPassenger()+"");
 
                 passengerMarker = addMarker(
                         new LatLng(
@@ -564,10 +584,10 @@ public class DriverActivity extends AppCompatActivity
                     if(!isPassengerGot) {
                         book_button.setText(String.format(java.util.Locale.US,"%.2f meters", driverDistance));
                     }
-                    if(driverDistance<=50) {
+                    if(driverDistance<=10) {
                         isPassengerGot = true;
                         driverUpdates.put("is50meters",true);
-                    } else if(driverDistance<=500) {
+                    } else if(driverDistance<=50) {
                         driverUpdates.put("is500meters",true);
                     }
 
@@ -585,6 +605,7 @@ public class DriverActivity extends AppCompatActivity
         AlertDialog.Builder passengerBuilder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.marker_custom_window, null);
 
+        dialogView.findViewById(R.id.linearLayoutDriverRating).setVisibility(View.GONE);
         CircleImageView profImg = dialogView.findViewById(R.id.marker_img);
 
         StorageReference storageRef = FirebaseStorage.getInstance().getReference();
@@ -600,6 +621,45 @@ public class DriverActivity extends AppCompatActivity
         });
 
         dialogView.findViewById(R.id.for_passenger_layout).setVisibility(View.VISIBLE);
+
+        Button btnOpenChat = dialogView.findViewById(R.id.btnOpenChat);
+
+        if(isPassengerAccept)
+            btnOpenChat.setVisibility(View.VISIBLE);
+        else
+            btnOpenChat.setVisibility(View.GONE);
+
+        btnOpenChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Create the chat dialog box
+                Dialog chatDialog = new Dialog(DriverActivity.this);
+                chatDialog.setContentView(R.layout.chat_dialog);
+
+                // Get references to the views in the chat dialog box
+                listViewChatBox = chatDialog.findViewById(R.id.list_view_chat);
+                EditText editText = chatDialog.findViewById(R.id.edit_text_chat);
+                Button sendButton = chatDialog.findViewById(R.id.button_send_chat);
+
+                sendButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        Message message = new Message(loggedInDriverObj,mb.getUser(),editText.getText().toString(),LocalDateTime.now().toString());
+                        String key = FirebaseDatabase.getInstance().getReference("messages").push().getKey();
+                        FirebaseDatabase.getInstance().getReference("messages").child(mb.getBookingID()).child(key).setValue(message);
+                    }
+                });
+
+                if(isPassengerAccept && !isChatListening) {
+                    MessageAdapter messageAdapter = new MessageAdapter(DriverActivity.this, messageArrayList);
+                    listViewChatBox.setAdapter(messageAdapter);
+
+                    listenToChat();
+                }
+
+                chatDialog.show();
+            }
+        });
 
         TextView name = dialogView.findViewById(R.id.marker_name);
         name.setText(mb.getUser().getFullname());
@@ -624,7 +684,7 @@ public class DriverActivity extends AppCompatActivity
         if(isAccepted) {
             button1.setVisibility(View.GONE);
             button2.setVisibility(View.GONE);
-            button3.setVisibility(View.VISIBLE);
+            button3.setVisibility(View.GONE);
         }
 
         passengerBuilder.setView(dialogView);
@@ -731,6 +791,7 @@ public class DriverActivity extends AppCompatActivity
                                                         mySession.getBooking().getDestination().getLongitude()
                                                 );
                                                 addMarker(targetDestination, mySession.getBooking(),2);
+                                                chat_button.setVisibility(View.GONE);
                                                 book_button.setText(CODE_DONE);
                                                 book_button.setBackgroundColor(getColor(R.color.green));
                                                 book_button.setVisibility(View.VISIBLE);
@@ -1417,5 +1478,48 @@ public class DriverActivity extends AppCompatActivity
     public static boolean isWithinRadius(LatLng point, LatLng center, double radius) {
         double distance = haversine(point.latitude, point.longitude, center.latitude, center.longitude);
         return distance <= radius;
+    }
+
+    public void listenToChat() {
+        isChatListening = true;
+        DatabaseReference messageRef = FirebaseDatabase.getInstance().getReference("messages").child(clickedBookingID);
+
+        messageRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+                if(isPassengerAccept) {
+                    Message message = dataSnapshot.getValue(Message.class);
+                    messageArrayList.add(message);
+
+                    MessageAdapter messageAdapter = new MessageAdapter(DriverActivity.this, messageArrayList);
+                    listViewChatBox.setAdapter(messageAdapter);
+
+                    if(message.getReceiver().equals(mAuth.getUid()))
+                        Toast.makeText(DriverActivity.this,"You have a message", Toast.LENGTH_LONG);
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
     }
 }

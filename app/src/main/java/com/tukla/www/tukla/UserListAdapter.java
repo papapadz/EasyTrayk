@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,10 +16,15 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
+import java.util.HashMap;
 import java.util.List;
 
 public class UserListAdapter extends BaseAdapter {
@@ -69,18 +75,16 @@ public class UserListAdapter extends BaseAdapter {
         TextView textViewName = convertView.findViewById(R.id.textViewName);
         TextView textViewAddress = convertView.findViewById(R.id.textViewAddress);
         TextView textViewPhone = convertView.findViewById(R.id.textViewPhone);
-        TextView textViewPlateNumber = convertView.findViewById(R.id.textViewPlateNumber);
+
         Button button = convertView.findViewById(R.id.button);
         Button button2 = convertView.findViewById(R.id.button2);
         LinearLayout linearLayout = convertView.findViewById(R.id.layout_admin_userlist);
 
         User data = (User) filteredUsers.get(position);
-        textViewName.setText(data.getFullname());
-        textViewAddress.setText(data.getAddress());
-        textViewPhone.setText(data.getPhone());
-        textViewPlateNumber.setText(data.getDriver().getPlateNumber());
+        textViewName.setText("Name: "+data.getLastname()+", "+data.getFullname()+data.getLastname());
+        textViewAddress.setText("Address: "+data.getAddress());
+        textViewPhone.setText("Phone: "+data.getPhone());
         StorageReference imgRef = storageRef.child("images/" + data.getUserID() + ".jpg");
-        StorageReference licRef = storageRef.child("licenses/" + data.getUserID() + ".jpg");
         imgRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
             @Override
             public void onSuccess(Uri uri) {
@@ -91,10 +95,102 @@ public class UserListAdapter extends BaseAdapter {
             }
         });
 
-        //        if(data.getIsDriver()) {
-        //            DatabaseReference driverRef = database.getReference("drivers");
-        //            textViewPlateNumber.setText(data.getFullname());
-        //        }
+                if(data.getIsDriver()) {
+                    TextView textViewTransactions = convertView.findViewById(R.id.textViewTransactions);
+                    TextView textViewPlateNumber = convertView.findViewById(R.id.textViewPlateNumber);
+                    TextView textViewToda = convertView.findViewById(R.id.textViewTODA);
+                    TextView textViewTricycleNumber = convertView.findViewById(R.id.textViewTricycleNumber);
+
+                    textViewPlateNumber.setText(data.getDriver().getPlateNumber());
+                    textViewToda.setText(data.getDriver().getToda());
+                    textViewTricycleNumber.setText(data.getDriver().getTricycleNumber());
+
+                    FirebaseDatabase.getInstance().getReference("history").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            int count = 0;
+                            for(DataSnapshot child: dataSnapshot.getChildren()) {
+                                History history = child.getValue(History.class);
+                                if(history.getSession().getDriver().getUserID().equals(data.getUserID()))
+                                    count+=1;
+;                            }
+                            textViewTransactions.setText(count+"");
+                            textViewTransactions.setVisibility(View.VISIBLE);
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
+                    LinearLayout forDriverLayout = convertView.findViewById(R.id.forDriver);
+                    LinearLayout forDriverLayout2 = convertView.findViewById(R.id.driverInfo);
+                    forDriverLayout.setVisibility(View.VISIBLE);
+                    forDriverLayout2.setVisibility(View.VISIBLE);
+                    StorageReference franchiseRef = storageRef.child("franchises/" + data.getUserID() + ".jpg");
+                    StorageReference licRef = storageRef.child("licenses/" + data.getUserID() + ".jpg");
+                    StorageReference motorRef = storageRef.child("motors/" + data.getUserID() + ".jpg");
+                    StorageReference tricyRef = storageRef.child("tricycles/" + data.getUserID() + ".jpg");
+
+                    linearLayout.setOnClickListener(new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            // inflate the layout for the dialog box
+                            LayoutInflater inflater = LayoutInflater.from(context);
+                            View dialogView = inflater.inflate(R.layout.custom_dialog_imageview, null);
+                            // get the ImageView from dialog_box.xml
+                            ImageView dialogImageView = dialogView.findViewById(R.id.admin_id_img);
+                            ImageView dialogImageView2 = dialogView.findViewById(R.id.admin_id_img2);
+                            ImageView dialogImageView3 = dialogView.findViewById(R.id.admin_id_img3);
+                            ImageView dialogImageView4 = dialogView.findViewById(R.id.admin_id_img4);
+                            // set the image for ImageView
+                            franchiseRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    Glide.with(dialogImageView.getContext())
+                                            .load(uri)
+                                            .fitCenter()
+                                            .into(dialogImageView);
+                                }
+                            });
+
+                            licRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    Glide.with(dialogImageView2.getContext())
+                                            .load(uri)
+                                            .fitCenter()
+                                            .into(dialogImageView2);
+                                }
+                            });
+
+                            motorRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    Glide.with(dialogImageView3.getContext())
+                                            .load(uri)
+                                            .fitCenter()
+                                            .into(dialogImageView3);
+                                }
+                            });
+
+                            tricyRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+                                    Glide.with(dialogImageView4.getContext())
+                                            .load(uri)
+                                            .fitCenter()
+                                            .into(dialogImageView4);
+                                }
+                            });
+                            // create the dialog box
+                            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+                            builder.setView(dialogView);
+                            // show the dialog box
+                            builder.show();
+                        }
+                    });
+                }
         button.setVisibility(View.VISIBLE);
         button2.setVisibility(View.VISIBLE);
 
@@ -109,9 +205,10 @@ public class UserListAdapter extends BaseAdapter {
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                database.getReference().child("users").child(data.getUserID()).child("isVerified").setValue(true);
-                database.getReference().child("users").child(data.getUserID()).child("isRejected").setValue(false);
-                //Toast.makeText(parent.getContext(), "User Verified!", Toast.LENGTH_SHORT);
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put("isVerified",true);
+                hashMap.put("isRejected",false);
+                database.getReference().child("users").child(data.getUserID()).updateChildren(hashMap);
                 showDialog("User Verified!");
             }
         });
@@ -121,32 +218,6 @@ public class UserListAdapter extends BaseAdapter {
             public void onClick(View v) {
                 database.getReference().child("users").child(data.getUserID()).child("isRejected").setValue(true);
                 showDialog("User Rejected!");
-            }
-        });
-
-        linearLayout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // inflate the layout for the dialog box
-                LayoutInflater inflater = LayoutInflater.from(context);
-                View dialogView = inflater.inflate(R.layout.custom_dialog_imageview, null);
-                // get the ImageView from dialog_box.xml
-                ImageView dialogImageView = dialogView.findViewById(R.id.admin_id_img);
-                // set the image for ImageView
-                licRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri uri) {
-                        Glide.with(dialogImageView.getContext())
-                                .load(uri)
-                                .fitCenter()
-                                .into(dialogImageView);
-                    }
-                });
-                // create the dialog box
-                AlertDialog.Builder builder = new AlertDialog.Builder(context);
-                builder.setView(dialogView);
-                // show the dialog box
-                builder.show();
             }
         });
 

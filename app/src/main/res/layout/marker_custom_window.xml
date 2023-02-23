@@ -1,5 +1,5 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="wrap_content"
+    android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
@@ -27,7 +27,9 @@
             android:background="@drawable/user_blank"/>
 
         <LinearLayout
-            android:layout_width="match_parent"
+            android:paddingStart="10dp"
+            android:layout_weight="6"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
@@ -101,6 +103,28 @@
 
         </LinearLayout>
 
+        <LinearLayout
+            android:id="@+id/linearLayoutDriverRating"
+            android:layout_weight="2"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <ImageView
+                android:tint="@color/star"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="3"
+                android:src="@drawable/ic_star" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:id="@+id/driverRating"
+                android:text="5 stars"
+                android:gravity="center" />
+
+        </LinearLayout>
     </LinearLayout>
 
     <TextView
@@ -116,10 +140,64 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <ScrollView
+        android:id="@+id/scrollViewMessages"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:visibility="gone"
+            android:padding="10sp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <ListView
+                android:id="@+id/listviewMessages"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="horizontal">
+
+                <EditText
+                    android:id="@+id/txtMessage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="4" />
+
+                <Button
+                    android:id="@+id/sendMessage"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Send" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </ScrollView>
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="horizontal">
+
+        <Button
+            android:visibility="gone"
+            android:layout_margin="10dp"
+            android:id="@+id/btnOpenChat"
+            android:layout_gravity="center_vertical"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="@color/colorAccent"
+            android:text="Chat"
+            android:textColor="@color/white"/>
+
 
         <Button
             android:id="@+id/marker_btn_accept"

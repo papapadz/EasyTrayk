@@ -22,6 +22,7 @@ public class Booking implements Serializable {
     private String note;
     private Boolean isClicked;
     private Boolean isCancelled;
+    private int numPassenger;
 
     public Booking() {
 
@@ -42,7 +43,8 @@ public class Booking implements Serializable {
             String destinationText,
             String note,
             Boolean isClicked,
-            Boolean isCancelled) {
+            Boolean isCancelled,
+            int numPassenger) {
 
         this.bookingID = bookingID;
         this.user = user;
@@ -59,6 +61,11 @@ public class Booking implements Serializable {
         this.note = note;
         this.isClicked = isClicked;
         this.isCancelled = isCancelled;
+        this.numPassenger = numPassenger;
+    }
+
+    public int getNumPassenger() {
+        return numPassenger;
     }
 
     public String getBookingID() {

@@ -6,14 +6,54 @@
     android:padding="16dp"
     android:layout_centerHorizontal="true">
 
-    <ImageView
-        android:padding="10dp"
-        android:id="@+id/admin_id_img"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:scaleType="centerCrop"
-        android:src="@drawable/ic_license" />
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <ImageView
+                android:padding="10dp"
+                android:id="@+id/admin_id_img"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_license" />
+
+            <ImageView
+                android:padding="10dp"
+                android:id="@+id/admin_id_img2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_license" />
+
+            <ImageView
+                android:padding="10dp"
+                android:id="@+id/admin_id_img3"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_license" />
+
+            <ImageView
+                android:padding="10dp"
+                android:id="@+id/admin_id_img4"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:adjustViewBounds="true"
+                android:scaleType="centerCrop"
+                android:src="@drawable/ic_license" />
+
+        </LinearLayout>
+
+    </ScrollView>
 
 
 </LinearLayout>

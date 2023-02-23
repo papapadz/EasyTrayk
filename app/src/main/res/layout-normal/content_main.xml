@@ -33,7 +33,7 @@
             android:background="@drawable/places_ic_search"
             android:tint="@color/colorPrimary" />
 
-        <EditText
+        <AutoCompleteTextView
             android:layout_weight="9"
             android:id="@+id/txt_dropoff"
             android:layout_width="0sp"
@@ -55,6 +55,96 @@
         map:mapType="normal"
         map:uiCompass="false"/>
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+
+        <android.support.v7.widget.CardView
+            android:id="@+id/product_description_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="4dp"
+            app:cardUseCompatPadding="true"
+            card_view:cardCornerRadius="@dimen/card_corner_radius"
+            card_view:cardElevation="@dimen/cardview_elevation">
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginLeft="20dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginRight="30dp"
+                android:layout_marginBottom="5dp">
+
+
+                <TextView
+                    android:id="@+id/price_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentRight="true"
+                    android:layout_centerVertical="true"
+                    android:text="0.00"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_gravity="center_vertical"
+                        android:layout_marginEnd="5dp"
+                        android:src="@drawable/ic_users" />
+
+                    <TextView
+                        android:id="@+id/numPassengerTxt"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1"
+                        android:textSize="20sp"
+                        android:textStyle="bold" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBaseline="@+id/price_text"
+                    android:layout_alignBottom="@+id/price_text"
+                    android:layout_toStartOf="@+id/price_text"
+                    android:text="@string/text_currency"
+                    android:textSize="17sp" />
+
+                <TextView
+                    android:id="@+id/distance_text"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentLeft="true"
+                    android:layout_centerVertical="true"
+                    android:text="0"
+                    android:textSize="20sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignBaseline="@+id/distance_text"
+                    android:layout_alignBottom="@+id/distance_text"
+                    android:layout_toEndOf="@+id/distance_text"
+                    android:text="@string/text_km"
+                    android:textSize="17sp" />
+
+
+            </RelativeLayout>
+
+        </android.support.v7.widget.CardView>
+
+    </RelativeLayout>
     <LinearLayout
         android:id="@+id/linearNearbyList"
         android:background="@color/colorPrimary"
@@ -694,76 +784,6 @@
 <!--                    android:text="@string/button_text"-->
 <!--                    android:textColor="@color/white" />-->
                 <!-- Bottom Layout-->
-                <RelativeLayout
-                    android:visibility="gone"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content">
-
-
-                    <android.support.v7.widget.CardView
-                        android:visibility="gone"
-                        android:id="@+id/product_description_card"
-                        android:layout_width="match_parent"
-                        android:layout_height="150sp"
-                        android:padding="4dp"
-                        app:cardUseCompatPadding="true"
-                        card_view:cardCornerRadius="@dimen/card_corner_radius"
-                        card_view:cardElevation="@dimen/cardview_elevation">
-
-                        <RelativeLayout
-                            android:visibility="gone"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginTop="5dp"
-                            android:layout_marginRight="30dp"
-                            android:layout_marginBottom="5dp">
-
-
-                            <TextView
-                                android:id="@+id/price_text"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentRight="true"
-                                android:layout_centerVertical="true"
-                                android:text="0.00"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignBaseline="@+id/price_text"
-                                android:layout_alignBottom="@+id/price_text"
-                                android:layout_toStartOf="@+id/price_text"
-                                android:text="@string/text_currency"
-                                android:textSize="17sp" />
-
-                            <TextView
-                                android:id="@+id/distance_text"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignParentLeft="true"
-                                android:layout_centerVertical="true"
-                                android:text="0"
-                                android:textSize="20sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_alignBaseline="@+id/distance_text"
-                                android:layout_alignBottom="@+id/distance_text"
-                                android:layout_toEndOf="@+id/distance_text"
-                                android:text="@string/text_km"
-                                android:textSize="17sp" />
-
-
-                        </RelativeLayout>
-
-                    </android.support.v7.widget.CardView>
-
-                </RelativeLayout>
 
 
             </RelativeLayout>

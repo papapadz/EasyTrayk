@@ -22,21 +22,45 @@
             android:layout_gravity="center"
             android:background="@drawable/ic_launcher" />
 
-
+<TextView
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textStyle="bold"
+    android:text="Terms and Conditions"
+    android:layout_marginBottom="10dp"/>
 
             <TextView
+                android:id="@+id/tncText"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/terms_and_conditions" />
+                android:layout_height="wrap_content" />
 
 
-        <Button
-            android:id="@+id/btnTermsAccept"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/colorPrimary"
-            android:textColor="@color/white"
-            android:text="TANNGAPIN" />
+            android:orientation="horizontal">
+
+            <Button
+                android:layout_margin="5dp"
+                android:id="@+id/btnTermsAccept"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@color/colorPrimary"
+                android:textColor="@color/white"
+                android:text="TANNGAPIN" />
+
+            <Button
+                android:layout_margin="5dp"
+                android:id="@+id/btnTermsCancel"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@color/colorRed"
+                android:textColor="@color/white"
+                android:text="IKANSELA" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

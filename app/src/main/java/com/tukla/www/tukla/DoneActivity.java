@@ -16,6 +16,7 @@ import android.widget.TextView;
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
@@ -168,11 +169,11 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
                                         dialog.dismiss();
                                     }
                                 });
-                                paymentPassenger.setText(booking.getFare()+"");
                                 name.setText(booking.getDriver().getFullname());
                                 plateNumber.setVisibility(View.VISIBLE);
                                 plateNumber.setText(booking.getDriver().getDriver().getPlateNumber());
                             }
+                            paymentPassenger.setText(booking.getFare()+"");
                             locationStart.setText(booking.getOriginText());
                             locationEnd.setText(booking.getDestinationText());
                             distanceDone.setText(booking.getDistance()+" KM");
@@ -205,7 +206,25 @@ public class DoneActivity extends AppCompatActivity implements Serializable {
                                         feedbackUpdates.put("rating", selectedRating);
                                         database.getReference("feedbacks").child(booking.getBookingID()).updateChildren(feedbackUpdates);
 
-                                        //FirebaseDatabase.getInstance().getReference("bookings").child(bookingID).removeValue();
+                                        DatabaseReference driverRatingsRef =  FirebaseDatabase.getInstance().getReference("driverRatings");
+                                        driverRatingsRef.child(booking.getDriver().getUserID()).addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                                                if(dataSnapshot.exists()) {
+                                                    int oldRating = dataSnapshot.getValue(Integer.class);
+                                                    int newRating = (selectedRating + oldRating) / 2;
+                                                    driverRatingsRef.child(booking.getDriver().getUserID()).setValue(newRating);
+                                                } else
+                                                    driverRatingsRef.child(booking.getDriver().getUserID()).setValue(selectedRating);
+
+                                            }
+
+                                            @Override
+                                            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                                            }
+                                        });
+
                                         intent = new Intent(DoneActivity.this,MainActivity.class);
                                         finish();
                                         startActivity(intent);

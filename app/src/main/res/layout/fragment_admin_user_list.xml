@@ -16,12 +16,36 @@
         android:orientation="vertical">
 
         <EditText
+            android:visibility="gone"
             android:id="@+id/adminUserSearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Search History"
+            android:hint="Search User"
             android:textSize="18dp"
             />
+
+        <LinearLayout
+            android:padding="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <TextView
+                android:paddingStart="5dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:textColor="@color/colorPrimary"
+                android:text="Filter Users by: "/>
+
+            <Spinner
+                android:id="@+id/spinnerUserFilter"
+                android:paddingStart="5dp"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="4" />
+
+        </LinearLayout>
 
         <ListView
             android:id="@+id/adminListUser"

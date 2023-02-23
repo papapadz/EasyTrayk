@@ -21,6 +21,8 @@ import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import androidx.navigation.Navigator;
+
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -102,14 +104,20 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
                 fragmentManager.beginTransaction().replace(R.id.fragment_container,todaListFragment).commit();
                 break;
             case R.id.nav_terms_conditions_list:
+                AdminTermsFragment adminTermsFragment = new AdminTermsFragment();
+                fragmentManager.beginTransaction().replace(R.id.fragment_container,adminTermsFragment).commit();
                 break;
             case R.id.nav_price_list:
+                AdminPriceListFragment priceListFragment = new AdminPriceListFragment();
+                fragmentManager.beginTransaction().replace(R.id.fragment_container,priceListFragment).commit();
                 break;
             case R.id.nav_rating_list:
                 AdminHistoryFragment historyListFragment = new AdminHistoryFragment();
                 fragmentManager.beginTransaction().replace(R.id.fragment_container,historyListFragment).commit();
                 break;
             case R.id.nav_support:
+                AdminSupportFragment supportFragment = new AdminSupportFragment();
+                fragmentManager.beginTransaction().replace(R.id.fragment_container,supportFragment).commit();
                 break;
             case R.id.nav_logOut:
                 Intent intent = new Intent(this, Login.class);
@@ -145,5 +153,40 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
     public void showHomeFragment() {
         AdminUserListFragment adminUserListFragment = new AdminUserListFragment();
         fragmentManager.beginTransaction().replace(R.id.fragment_container,adminUserListFragment).commit();
+    }
+
+    @Override
+    public void onBackPressed() {
+        DrawerLayout drawer = (DrawerLayout) findViewById( R.id.admin_drawer_layout );
+        if (drawer.isDrawerOpen( GravityCompat.START )) {
+            drawer.closeDrawer( GravityCompat.START );
+        } else {
+            drawer.openDrawer( GravityCompat.START );
+//            super.onBackPressed();
+//
+//            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//            builder.setTitle("Sign out?");
+//            builder.setMessage("You have pressed back button. Are you signing out?");
+//            AlertDialog dialog = builder.create();
+//
+//            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    // Do something when the OK button is clicked
+//                    dialog.dismiss();
+//                    FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
+//                    Intent intent =new Intent(MainActivity.this,Login.class);
+//                    finish();
+//                    startActivity(intent);
+//                }
+//            });
+//
+//            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    dialog.dismiss();
+//                }
+//            });
+        }
     }
 }

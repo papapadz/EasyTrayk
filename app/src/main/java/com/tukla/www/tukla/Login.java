@@ -1,9 +1,12 @@
 package com.tukla.www.tukla;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.text.InputType;
 import android.util.Log;
@@ -12,9 +15,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,6 +31,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 public class Login extends AppCompatActivity implements Serializable {
 
@@ -48,6 +54,47 @@ public class Login extends AppCompatActivity implements Serializable {
         password = findViewById(R.id.password);
         mAuth = FirebaseAuth.getInstance();
         showHideCheckBox1 = findViewById(R.id.show_hide_checkbox_1);
+        TextView forgotPassword = findViewById(R.id.forgotPassword);
+
+        forgotPassword.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Dialog dialog = new Dialog(Login.this);
+                dialog.setContentView(R.layout.forgot_password_layout);
+
+                AlertDialog.Builder builder = new AlertDialog.Builder(Login.this);
+                // Get references to the views in the chat dialog box
+                EditText editText = dialog.findViewById(R.id.forgotEmail);
+                Button sendButton = dialog.findViewById(R.id.btnForgotSend);
+
+                sendButton.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if(editText.getText().toString().length()>1 && editText.getText().toString().contains("@")) {
+                            FirebaseAuth.getInstance().sendPasswordResetEmail(editText.getText().toString())
+                                    .addOnCompleteListener(new OnCompleteListener<Void>() {
+                                        @Override
+                                        public void onComplete(@NonNull Task<Void> task) {
+                                            if (task.isSuccessful()) {
+                                                // Password reset email sent successfully
+                                                Toast.makeText(Login.this, "Password reset email sent", Toast.LENGTH_SHORT).show();
+                                            } else {
+                                                // Password reset email failed to send
+                                                Toast.makeText(Login.this, "Failed to send password reset email", Toast.LENGTH_SHORT).show();
+                                            }
+                                        }
+                                    });
+                            dialog.dismiss();
+                        } else {
+                            editText.setError("Check Email");
+                            editText.requestFocus();
+                        }
+
+                    }
+                });
+                dialog.show();
+            }
+        });
 
         showHideCheckBox1.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override

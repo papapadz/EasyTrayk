@@ -11,12 +11,43 @@
         android:orientation="horizontal"
         android:id="@+id/layout_admin_userlist">
 
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
-            android:padding="5dp"
-            android:src="@drawable/user_blank" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageView
+                android:layout_gravity="center"
+                android:id="@+id/imageView"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:padding="5dp"
+                android:src="@drawable/user_blank" />
+
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/forDriver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/textViewTransactions"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1" />
+                <EditText
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textStyle="bold"
+                    android:textSize="10dp"
+                    android:text="Transactions" />
+
+            </LinearLayout>
+
+        </LinearLayout>
 
         <LinearLayout
             android:padding="5dp"
@@ -30,7 +61,7 @@
                 android:orientation="horizontal">
 
                 <LinearLayout
-                    android:layout_width="200dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical" >
 
@@ -52,43 +83,63 @@
                         android:layout_height="wrap_content"
                         android:text="Your Text" />
 
-                    <TextView
-                        android:id="@+id/textViewPlateNumber"
+                    <LinearLayout
+                        android:visibility="gone"
+                        android:id="@+id/driverInfo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:visibility="gone"
-                        android:text="Your Text" />
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/textViewPlateNumber"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Your Text" />
+
+                        <TextView
+                            android:id="@+id/textViewTODA"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Your Text" />
+
+                        <TextView
+                            android:id="@+id/textViewTricycleNumber"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Your Text" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
-
-                    <Button
-                        android:layout_margin="10dp"
-                        android:id="@+id/button"
-                        android:background="@color/green"
-                        android:textColor="@color/white"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end"
-                        android:text="Verify" />
-
-                    <Button
-                        android:layout_margin="10dp"
-                        android:id="@+id/button2"
-                        android:background="@color/colorRed"
-                        android:textColor="@color/white"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="end"
-                        android:text="Reject" />
-
-                </LinearLayout>
             </LinearLayout>
+            <LinearLayout
+                android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
 
+                <Button
+                    android:layout_margin="5dp"
+                    android:id="@+id/button"
+                    android:background="@color/green"
+                    android:textColor="@color/white"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:text="Verify" />
+
+                <Button
+                    android:layout_margin="5dp"
+                    android:id="@+id/button2"
+                    android:background="@color/colorRed"
+                    android:textColor="@color/white"
+                    android:layout_width="0dp"
+                    android:layout_height="30dp"
+                    android:layout_weight="1"
+                    android:text="Reject" />
+
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

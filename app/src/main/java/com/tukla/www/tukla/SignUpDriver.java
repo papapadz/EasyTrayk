@@ -22,6 +22,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -31,6 +32,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.auth.SignInMethodQueryResult;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -55,7 +57,7 @@ public class SignUpDriver extends AppCompatActivity {
     private EditText email_id;
     private EditText mpassword;
     private EditText mconfirmpassword;
-    private EditText eToda;
+    private AutoCompleteTextView eToda;
     private EditText ePlateNumber;
     private EditText eMiddleName;
     private EditText eLastName;
@@ -85,6 +87,53 @@ public class SignUpDriver extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.sign_up_driver);
 
+        View dialogView = getLayoutInflater().inflate(R.layout.terms_conditions, null);
+
+        FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
+
+        TextView tncText = dialogView.findViewById(R.id.tncText);
+        firebaseDatabase.getReference("termsList").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                tncText.setText("");
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Term term = snapshot.getValue(Term.class);
+
+                    String prevTxt = tncText.getText().toString();
+                    String newTxt = prevTxt + term.getOrdder() + "." + term.getTerm()+"\n";
+                    tncText.setText(newTxt);
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        AlertDialog.Builder termsDialogBuilder = new AlertDialog.Builder(SignUpDriver.this);
+        termsDialogBuilder.setView(dialogView);
+
+        AlertDialog termsDialog = termsDialogBuilder.create();
+        termsDialog.show();
+
+        Button acceptTerms = dialogView.findViewById(R.id.btnTermsAccept);
+        acceptTerms.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                termsDialog.dismiss();
+            }
+        });
+
+        Button declineTerms = dialogView.findViewById(R.id.btnTermsCancel);
+        declineTerms.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(SignUpDriver.this, SignUpLanding.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
         mAuth=FirebaseAuth.getInstance();
         eFullName=findViewById(R.id.eFullName);
         eAddress=findViewById(R.id.eAddress);
@@ -104,9 +153,15 @@ public class SignUpDriver extends AppCompatActivity {
         imgMotor=findViewById(R.id.img_motor);
         imgTricycle=findViewById(R.id.img_tricycle);
         Button buttonBack = findViewById(R.id.button3);
-        AutoCompleteTextView eToda = findViewById(R.id.todaAutocomplete);
+        eToda = findViewById(R.id.todaAutocomplete);
 
-        FirebaseDatabase.getInstance().getReference("todaList").addListenerForSingleValueEvent(new ValueEventListener() {
+        eToda.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View view, boolean b) {
+                eToda.showDropDown();
+            }
+        });
+        firebaseDatabase.getReference("todaList").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 categoriesList.clear();
@@ -221,8 +276,26 @@ public class SignUpDriver extends AppCompatActivity {
             public void onClick(View view) {
 
                 if(checkEmailPassword(email_id.getText().toString(),mpassword.getText().toString())) {
-                    linearLayout1.setVisibility(View.GONE);
-                    linearLayout2.setVisibility(View.VISIBLE);
+                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
+
+                    mAuth.fetchSignInMethodsForEmail(email_id.getText().toString())
+                            .addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
+                                @Override
+                                public void onComplete(@NonNull Task<SignInMethodQueryResult> task) {
+                                    if (task.isSuccessful()) {
+                                        SignInMethodQueryResult result = task.getResult();
+                                        if (result != null && result.getSignInMethods() != null && result.getSignInMethods().size() > 0) {
+                                            // Email address is already registered
+                                            email_id.requestFocus();
+                                            email_id.setError("Email already exists!");
+                                        } else {
+                                            linearLayout1.setVisibility(View.GONE);
+                                            linearLayout2.setVisibility(View.VISIBLE);
+                                        }
+                                    }
+                                }
+                            });
+                    mAuth.signOut();
                 }
             }
         });
@@ -321,6 +394,9 @@ public class SignUpDriver extends AppCompatActivity {
                             updateDatabase();
                             //UpdateUI(firebaseUser);
                             sendEmailVerification(firebaseUser);
+                            Intent intent =new Intent(SignUpDriver.this,Login.class);
+                            finish();
+                            startActivity(intent);
                         } else {
                             dialog.dismiss();
                             Toast.makeText(getApplicationContext(), "Unsuccessful registration", Toast.LENGTH_SHORT)

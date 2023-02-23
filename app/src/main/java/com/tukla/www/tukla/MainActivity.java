@@ -1,11 +1,15 @@
 package com.tukla.www.tukla;
 
+import static com.tukla.www.tukla.R.id.add;
+import static com.tukla.www.tukla.R.id.listviewMessages;
 import static com.tukla.www.tukla.R.id.map;
+import static com.tukla.www.tukla.R.id.message;
 import static com.tukla.www.tukla.R.id.nav_logOut;
 import static com.tukla.www.tukla.R.id.nav_profile;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.LoaderManager;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -19,6 +23,7 @@ import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -33,16 +38,22 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,6 +89,7 @@ import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
@@ -93,8 +105,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -128,7 +145,7 @@ public class MainActivity extends AppCompatActivity
 
     Geocoder geocoder;
     List<android.location.Address> addresses;
-    EditText txtDropOff;
+    AutoCompleteTextView txtDropOff;
     TextView priceText;
     TextView distanceText;
     LatLng myPosition;
@@ -139,8 +156,8 @@ public class MainActivity extends AppCompatActivity
     private final String CODE_CANCEL = "Cancel";
     private final String CODE_DRIVER_WAIT = "Waiting Driver";
     private final String CODE_DRIVER_OK = "Driver Arrived";
-    private final String CODE_SOS = "SOS";
     private final String CODE_DONE = "Done";
+    private final String CODE_CHAT = "Chat";
 
     private Boolean isBookClicked = false;
     String recentBookingID;
@@ -168,17 +185,48 @@ public class MainActivity extends AppCompatActivity
     private List<DriverLocationObject> listDriverLocationsObject = new ArrayList<>();
     private ListView listViewDriverLocations;
     private LinearLayout linearLayoutnearby;
+    private double priceFare;
+    AlertDialog.Builder waitingDriverbuilder;
+    AlertDialog waitingDriverDialog;
+    private ListView listViewChatBox;
+    ArrayList<Message> messageArrayList = new ArrayList<>();
+    int numPassenger = 1;
+    String[] spinnerItems = {"1","2","3"};
+    private TextView numPassengerTxt;
+    Dialog chatDialog;
+    EditText editTextChat;
+    Button sendButtonChat;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
         mAuth = FirebaseAuth.getInstance();
         super.onCreate( savedInstanceState );
         setContentView( R.layout.activity_main );
+        Locale locale = new Locale("PH");
+        Locale.setDefault(locale);
+        chatDialog = new Dialog(MainActivity.this);
+        chatDialog.setContentView(R.layout.chat_dialog);
+        listViewChatBox = chatDialog.findViewById(R.id.list_view_chat);
+        editTextChat = chatDialog.findViewById(R.id.edit_text_chat);
+        sendButtonChat = chatDialog.findViewById(R.id.button_send_chat);
+
+        sendButtonChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Message message = new Message(thisSession.getBooking().getUser(),thisSession.getDriver(),editTextChat.getText().toString(),LocalDateTime.now().toString());
+                String key = FirebaseDatabase.getInstance().getReference("messages").push().getKey();
+                FirebaseDatabase.getInstance().getReference("messages").child(thisSession.getBooking().getBookingID()).child(key).setValue(message);
+                editTextChat.setText("");
+            }
+        });
 
         FirebaseDatabase database = FirebaseDatabase.getInstance();
-        database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
+
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
+
+
 
         listViewDriverLocations = findViewById(R.id.listViewDriverNear);
         linearLayoutnearby = findViewById(R.id.linearNearbyList);
@@ -197,16 +245,12 @@ public class MainActivity extends AppCompatActivity
         navigationView = (NavigationView) findViewById( R.id.nav_view );
         navigationView.setNavigationItemSelectedListener( this );
 
-        txtDropOff = (EditText) findViewById(R.id.txt_dropoff);
-        //
-        //Buttons Select Product option
-        //select_btn = (ImageButton) findViewById( R.id.img_selected );
-        //products_select_option = (RelativeLayout) findViewById( R.id.products_select_option );
+        txtDropOff = findViewById(R.id.txt_dropoff);
+
         myCurrentloc=(Button) findViewById( R.id.myCLocation );
         priceText = (TextView) findViewById(R.id.price_text);
         distanceText = (TextView) findViewById(R.id.distance_text);
-        //drivername_text = (TextView) findViewById(R.id.drivername_text);
-        //platenumber_text = (TextView) findViewById(R.id.platenumber_text);
+        numPassengerTxt = findViewById(R.id.numPassengerTxt);
 
         book_button=(Button)findViewById(R.id.book_button);
         findNearbyDrivers();
@@ -250,16 +294,11 @@ public class MainActivity extends AppCompatActivity
                     } else if(book_button.getText().toString().equals(CODE_CANCEL)){
                         //driver_info.setVisibility(View.GONE);
                         cancelBook();
-                    } else if (book_button.getText().toString().equals(CODE_SOS)) {
-                        // Check if app has permission to make phone calls
-                        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.CALL_PHONE) != PackageManager.PERMISSION_GRANTED) {
-                            // Request permission if it does not have it
-                            ActivityCompat.requestPermissions(MainActivity.this, new String[]{Manifest.permission.CALL_PHONE}, 123);
-                        } else {
-                            // App has permission, make phone call
-                            Intent intent = new Intent(Intent.ACTION_CALL, Uri.parse("tel:" + "+639322206783"));
-                            startActivity(intent);
-                        }
+                    } else if (book_button.getText().toString().equals(CODE_CHAT)) {
+
+                        //MessageAdapter messageAdapter = new MessageAdapter(MainActivity.this, messageArrayList);
+                        //listViewChatBox.setAdapter(messageAdapter);
+                        chatDialog.show();
                     }
                 } catch (Exception e) {
                     Toast.makeText(getApplicationContext(),"An error occured! Try selecting another place.",Toast.LENGTH_SHORT);
@@ -288,8 +327,31 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View v) {
                 mMap.clear();
-                txtDropOff.setText("");
+                //txtDropOff.setText("");
                 isMapClick=false;
+                txtDropOff.showDropDown();
+            }
+        });
+
+        txtDropOff.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                try {
+                    loadPlaces();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                txtDropOff.showDropDown();
             }
         });
 
@@ -310,8 +372,6 @@ public class MainActivity extends AppCompatActivity
                             myMarkerOptions.icon(BitmapDescriptorFactory.fromResource(R.drawable.ic_tricycle));
                             myMarkerOptions.position(positionUpdate);
                             //myMarkerOptions.title("Driver: "+mySession.getDriver().getFullname()+" | Plate No. "+mySession.getDriver().getDriver().getPlateNumber());
-                            driverMarker = mMap.addMarker(myMarkerOptions);
-                            driverMarker.setTag(mySession.getDriver());
 
                             CameraUpdate camerUpdate = CameraUpdateFactory.newLatLngZoom( positionUpdate, 20 );
                             mMap.animateCamera(camerUpdate);
@@ -327,31 +387,14 @@ public class MainActivity extends AppCompatActivity
                             double dist = driverLocation.distanceTo(myCurrLocation)/1000;
                             double time = (dist/20) * 60;
 
-
-//                            if(mySession.getIs500meters() && !mySession.getIsDriverArrived() && isNotified==0) {
-//                                isNotified=1;
-//                                AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-//                                builder.setTitle("Your Driver is near!");
-//                                builder.setMessage("I am 500 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
-//                                AlertDialog dialog = builder.create();
-//
-//                                builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//                                    @Override
-//                                    public void onClick(DialogInterface dialog, int which) {
-//                                        // Do something when the OK button is clicked
-//                                        dialog.dismiss();
-//                                    }
-//                                });
-//                                dialog.show();
-//                            } else
                             if(mySession.getIs50meters() && !mySession.getIsDriverArrived() && isNotified==0) {
                                 isNotified=1;
                                 mySessionsRef.child(sessionSnapshot.getKey()).child("isDriverArrived").setValue(true);
-                                book_button.setText(CODE_SOS);
-                                book_button.setBackgroundColor(getColor(R.color.colorRed));
+                                book_button.setText(CODE_CHAT);
+                                book_button.setBackgroundColor(getColor(R.color.colorAccent));
                                 AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
                                 builder.setTitle("Your Driver is almost there!");
-                                builder.setMessage("I am 50 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
+                                builder.setMessage("I am 10 meters away. My plate number is "+myBookingObj.getDriver().getDriver().getPlateNumber());
                                 AlertDialog dialog = builder.create();
 
                                 builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -369,7 +412,21 @@ public class MainActivity extends AppCompatActivity
 
                                 dist = myCurrLocation.distanceTo(dest)/1000;
                                 time = (dist/20) * 60;
+
+                                mMap.clear();
+                                DownloadTask downloadTask = new DownloadTask();
+                                String url = getDirectionsUrl(positionUpdate, new LatLng(mySession.getBooking().getDestination().getLatitude(),mySession.getBooking().getDestination().getLongitude()));
+                                downloadTask.execute(url);
+                            } else {
+                                mMap.clear();
+                                DownloadTask downloadTask = new DownloadTask();
+                                LatLng myLoc = new LatLng(myCurrLocation.getLatitude(),myCurrLocation.getLongitude());
+                                String url = getDirectionsUrl(positionUpdate, myLoc);
+                                downloadTask.execute(url);
                             }
+
+                            driverMarker = mMap.addMarker(myMarkerOptions);
+                            driverMarker.setTag(mySession.getDriver());
 
                             String eta = String.format("%.2f",time);
                             String sDist = String.format("%.2f",(dist));
@@ -383,6 +440,25 @@ public class MainActivity extends AppCompatActivity
 
                             break;
                         }
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+        database.getReference("priceList").addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                for(DataSnapshot snapshot: dataSnapshot.getChildren()) {
+                    Fare fare = snapshot.getValue(Fare.class);
+                    if(fare.getIsActive()) {
+                        priceFare = fare.getPrice();
+                        priceText.setText(String.format("%.2f",priceFare*numPassenger));
+                        break;
+                    }
                 }
             }
 
@@ -444,31 +520,32 @@ public class MainActivity extends AppCompatActivity
         if (drawer.isDrawerOpen( GravityCompat.START )) {
             drawer.closeDrawer( GravityCompat.START );
         } else {
-            super.onBackPressed();
-
-            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-            builder.setTitle("Sign out?");
-            builder.setMessage("You have pressed back button. Are you signing out?");
-            AlertDialog dialog = builder.create();
-
-            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // Do something when the OK button is clicked
-                    dialog.dismiss();
-                    FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
-                    Intent intent =new Intent(MainActivity.this,Login.class);
-                    finish();
-                    startActivity(intent);
-                }
-            });
-
-            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                }
-            });
+            drawer.openDrawer( GravityCompat.START );
+//            super.onBackPressed();
+//
+//            AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+//            builder.setTitle("Sign out?");
+//            builder.setMessage("You have pressed back button. Are you signing out?");
+//            AlertDialog dialog = builder.create();
+//
+//            builder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    // Do something when the OK button is clicked
+//                    dialog.dismiss();
+//                    FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
+//                    Intent intent =new Intent(MainActivity.this,Login.class);
+//                    finish();
+//                    startActivity(intent);
+//                }
+//            });
+//
+//            builder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+//                @Override
+//                public void onClick(DialogInterface dialog, int which) {
+//                    dialog.dismiss();
+//                }
+//            });
         }
     }
 
@@ -605,6 +682,7 @@ public class MainActivity extends AppCompatActivity
         }
         driverMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(50,20)));
 
+
         //This line will show your current location on Map with GPS dot
         mMap.setMyLocationEnabled( true );
         locationButton();
@@ -629,6 +707,16 @@ public class MainActivity extends AppCompatActivity
                         txtDropOff.setText("");
                     }
                 }
+            }
+        });
+
+        mMap.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                if(isBookClicked) {
+                    showCustomDialog(thisSession);
+                }
+                return false;
             }
         });
     }
@@ -997,22 +1085,22 @@ public class MainActivity extends AppCompatActivity
     private Address setDestination() {
 
         try {
-            List<Address> addresses = new ArrayList<>();
+            //List<Address> addresses = new ArrayList<>();
             // addressList = geocoder.getFromLocationName(paramLocString,1);
             if(isMapClick) {
                 addresses = geocoder.getFromLocation(destinationMarker.getPosition().latitude,destinationMarker.getPosition().longitude,1);
-                //return addresses.get(0);
+                return addresses.get(0);
             } else if(!txtDropOff.getText().toString().equals("")) {
-                addresses = geocoder.getFromLocationName(txtDropOff.getText().toString(),10);
+                addresses = geocoder.getFromLocationName(txtDropOff.getText().toString(),1,calambaBounds.southwest.latitude,calambaBounds.southwest.longitude,calambaBounds.northeast.latitude,calambaBounds.northeast.longitude);
                 positionUpdate= new LatLng(addresses.get(0).getLatitude(),addresses.get(0).getLongitude());
-                //return addresses.get(0);
+                return addresses.get(0);
             }
-            for (Address address : addresses) {
-                LatLng location = new LatLng(address.getLatitude(), address.getLongitude());
-                if (calambaBounds.contains(location)) {
-                    return address;
-                }
-            }
+//            for (Address address : addresses) {
+//                LatLng location = new LatLng(address.getLatitude(), address.getLongitude());
+//                if (calambaBounds.contains(location)) {
+//                    return address;
+//                }
+//            }
         } catch (IOException e) {
             e.printStackTrace();
             return null;
@@ -1045,15 +1133,20 @@ public class MainActivity extends AppCompatActivity
 
         double fare = 0.00;
         double distanceKm = distance/1000;
-        if(distanceKm<3) {
-            fare = 60.00;
+        if(distanceKm<=4) {
+            fare = priceFare * numPassenger;
         } else {
-            int extraDistance = (int) (distanceKm - 2);
-            fare = ((extraDistance*8)+60);
+            int extraDistance = (int) (distanceKm - 4);
+            fare = ((extraDistance*5)+(priceFare*numPassenger));
+        }
+
+        if(!loggedInUser.getCategory().equals("Regular")) {
+            fare = Math.ceil(fare * .90);
         }
 
         distanceText.setText(distanceKm+"");
         priceText.setText(fare+"");
+        numPassengerTxt.setText(numPassenger+"");
         updateFirebase(fare,distanceKm);
         return fare;
     }
@@ -1067,21 +1160,21 @@ public class MainActivity extends AppCompatActivity
         isBookClicked = true;
         LatLngDefined l1 = new LatLngDefined(myPosition.latitude,myPosition.longitude);
         LatLngDefined l2 = new LatLngDefined(positionUpdate.latitude,positionUpdate.longitude);
-        myBookingObj = new Booking(recentBookingID,loggedInUser, null,LocalDateTime.now().toString(),l1,l2,false,false, paramFare, paramDistance,myCurrentloc.getText().toString(),txtDropOff.getText().toString(),txtMyNote,false,false);
+        myBookingObj = new Booking(recentBookingID,loggedInUser, null,LocalDateTime.now().toString(),l1,l2,false,false, paramFare, paramDistance,myCurrentloc.getText().toString(),txtDropOff.getText().toString(),txtMyNote,false,false,numPassenger);
         myBookingsRef.child(recentBookingID).setValue(myBookingObj);
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle("Booking successful!");
-        builder.setMessage("Please wait for a driver...");
-        AlertDialog dialog = builder.create();
-        dialog.show();
-        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+        waitingDriverbuilder = new AlertDialog.Builder(MainActivity.this);
+        waitingDriverbuilder.setTitle("Booking successful!");
+        waitingDriverbuilder.setMessage("Please wait for a driver...");
+        waitingDriverbuilder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 // Do something when the OK button is clicked
-                dialog.dismiss();
+                waitingDriverDialog.dismiss();
             }
         });
+        waitingDriverDialog = waitingDriverbuilder.create();
+        waitingDriverDialog.show();
 
         myBookingsRef.child(recentBookingID).addValueEventListener(new ValueEventListener() {
             @Override
@@ -1090,6 +1183,7 @@ public class MainActivity extends AppCompatActivity
                     Booking booking = dataSnapshot.getValue(Booking.class);
                     myBookingObj = booking;
                     if(booking.getIsCancelled() && !isCancelled) {
+                        waitingDriverDialog.dismiss();
                         isCancelled = true;
                         Toast.makeText(getBaseContext(), "You have cancelled your booking, please book again.", Toast.LENGTH_SHORT).show();
                         isBookClicked = false;
@@ -1103,6 +1197,7 @@ public class MainActivity extends AppCompatActivity
                     } else if(booking.getIsAccepted() && !booking.getIsArrived()) {
                         //book_button.setText(CODE_DRIVER_WAIT);
                         isCancelled = false;
+                        waitingDriverDialog.dismiss();
                         book_button.setBackgroundColor(getColor(R.color.colorRed));
                         Toast.makeText(getBaseContext(), "Driver found! Click Accept or Reject.", Toast.LENGTH_SHORT).show();
 
@@ -1149,8 +1244,31 @@ public class MainActivity extends AppCompatActivity
 
     private void showCustomDialog(Session mb) {
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.marker_custom_window, null);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+        Button btnOpenChat = dialogView.findViewById(R.id.btnOpenChat);
+
+        if(mb.getIsAccepted())
+            btnOpenChat.setVisibility(View.VISIBLE);
+        else
+            btnOpenChat.setVisibility(View.GONE);
+
+        btnOpenChat.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Create the chat dialog box
+                //Dialog chatDialog = new Dialog(MainActivity.this);
+                //chatDialog.setContentView(R.layout.chat_dialog);
+
+                // Get references to the views in the chat dialog box
+                //listViewChatBox = chatDialog.findViewById(R.id.list_view_chat);
+                //MessageAdapter messageAdapter = new MessageAdapter(MainActivity.this, messageArrayList);
+                //listViewChatBox.setAdapter(messageAdapter);
+                chatDialog.show();
+            }
+        });
 
         CircleImageView profImg = dialogView.findViewById(R.id.marker_img);
 
@@ -1163,6 +1281,22 @@ public class MainActivity extends AppCompatActivity
                         .load(uri)
                         .fitCenter()
                         .into(profImg);
+            }
+        });
+
+        TextView rating = dialogView.findViewById(R.id.driverRating);
+        FirebaseDatabase.getInstance().getReference().child("driverRatings").child(mb.getDriver().getUserID()).addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if(dataSnapshot.exists()) {
+                    rating.setText(dataSnapshot.getValue(Integer.class)+" stars");
+                } else
+                    rating.setText("No ratings yet");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
             }
         });
 
@@ -1186,15 +1320,35 @@ public class MainActivity extends AppCompatActivity
 
         button.setText("Accept");
         buttonCancel.setText("Reject");
-        buttonCancel.setVisibility(View.VISIBLE);
 
+        if(mb.getIsAccepted()) {
+            button.setVisibility(View.GONE);
+            buttonCancel.setVisibility(View.GONE);
+        } else {
+            button.setVisibility(View.VISIBLE);
+            buttonCancel.setVisibility(View.VISIBLE);
+        }
+
+       // EditText txtMessage = dialogView.findViewById(R.id.txtMessage);
+       // Button btnSendMessage = dialogView.findViewById(R.id.sendMessage);
         builder.setView(dialogView);
         final AlertDialog dialog = builder.create();
         dialog.show();
 
+//        btnSendMessage.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Message message = new Message(mb.getBooking().getUser(),mb.getDriver(),txtMessage.getText().toString(),LocalDateTime.now().toString());
+//                String key = FirebaseDatabase.getInstance().getReference("messages").push().getKey();
+//                FirebaseDatabase.getInstance().getReference("messages").child(mb.getBooking().getBookingID()).child(key).setValue(message);
+//                dialog.dismiss();
+//            }
+//        });
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                listenToChat();
                 // Handle button click event
                 linearLayoutnearby.setVisibility(View.GONE);
                 FirebaseDatabase.getInstance().getReference().child("sessions").child(recentBookingID).child("isAccepted").setValue(true);
@@ -1206,7 +1360,8 @@ public class MainActivity extends AppCompatActivity
         buttonCancel.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                //cancelBook();
+                btnOpenChat.setVisibility(View.GONE);
+                cancelBook();
                 dialog.dismiss();
             }
         });
@@ -1221,10 +1376,27 @@ public class MainActivity extends AppCompatActivity
         EditText note = dialogView.findViewById(R.id.txtNote);
         Button button = dialogView.findViewById(R.id.customBtnBook);
         Button button2 = dialogView.findViewById(R.id.customBtnCancel);
+        Spinner spinnerNumPassenger = dialogView.findViewById(R.id.spinnerNumPassenger);
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, spinnerItems);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerNumPassenger.setAdapter(adapter);
 
         builder.setView(dialogView);
         final AlertDialog dialog = builder.create();
         dialog.show();
+
+        spinnerNumPassenger.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int i, long l) {
+                numPassenger = Integer.parseInt(adapterView.getItemAtPosition(i).toString());
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+
+            }
+        });
 
         button.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -1405,5 +1577,180 @@ public class MainActivity extends AppCompatActivity
     public static boolean isWithinRadius(LatLng point, LatLng center,double radius) {
         double distance = haversine(point.latitude, point.longitude, center.latitude, center.longitude);
         return distance <= radius;
+    }
+
+    public void listenToChat() {
+
+        DatabaseReference messageRef = FirebaseDatabase.getInstance().getReference("messages").child(recentBookingID);
+
+        messageRef.addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                if(isBookClicked) {
+                    Message message = dataSnapshot.getValue(Message.class);
+                    messageArrayList.add(message);
+                    MessageAdapter messageAdapter = new MessageAdapter(MainActivity.this, messageArrayList);
+                    listViewChatBox.setAdapter(messageAdapter);
+
+                    if(message.getReceiver().equals(mAuth.getUid()))
+                        Toast.makeText(MainActivity.this,"You have a message", Toast.LENGTH_LONG);
+                }
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+
+    }
+    private String downloadUrl(String strUrl) throws IOException {
+        String data = "";
+        InputStream iStream = null;
+        HttpURLConnection urlConnection = null;
+        try {
+            URL url = new URL(strUrl);
+
+            // Creating an http connection to communicate with url
+            urlConnection = (HttpURLConnection) url.openConnection();
+
+            // Connecting to url
+            urlConnection.connect();
+
+            // Reading data from url
+            iStream = urlConnection.getInputStream();
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(iStream));
+
+            StringBuffer sb = new StringBuffer();
+
+            String line = "";
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+
+            data = sb.toString();
+
+            br.close();
+
+        } catch (Exception e) {
+            Log.d("Exception while downloading url", e.toString());
+        } finally {
+            iStream.close();
+            urlConnection.disconnect();
+        }
+        return data;
+    }
+
+    private class DownloadTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... url) {
+
+            String data = "";
+
+            try {
+                data = downloadUrl(url[0]);
+            } catch (Exception e) {
+                Log.d("Background Task", e.toString());
+            }
+            return data;
+        }
+
+        @Override
+        protected void onPostExecute(String result) {
+            super.onPostExecute(result);
+
+            ParserTask parserTask = new ParserTask();
+
+            parserTask.execute(result);
+
+        }
+    }
+
+    private class ParserTask extends AsyncTask<String, Integer, List<List<HashMap<String, String>>>> {
+
+        // Parsing the data in non-ui thread
+        @Override
+        protected List<List<HashMap<String, String>>> doInBackground(String... jsonData) {
+
+            JSONObject jObject;
+            List<List<HashMap<String, String>>> routes = null;
+
+            try {
+                jObject = new JSONObject(jsonData[0]);
+                DirectionsJSONParser parser = new DirectionsJSONParser();
+
+                routes = parser.parse(jObject);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return routes;
+        }
+
+        @Override
+        protected void onPostExecute(List<List<HashMap<String, String>>> result) {
+            ArrayList<LatLng> points = null;
+            PolylineOptions lineOptions = null;
+            //MarkerOptions markerOptions = new MarkerOptions();
+
+            for (int i = 0; i < result.size(); i++) {
+                points = new ArrayList<LatLng>();
+                lineOptions = new PolylineOptions();
+
+                List<HashMap<String, String>> path = result.get(i);
+
+                for (int j = 0; j < path.size(); j++) {
+                    HashMap<String, String> point = path.get(j);
+
+                    double lat = Double.parseDouble(point.get("lat"));
+                    double lng = Double.parseDouble(point.get("lng"));
+                    LatLng position = new LatLng(lat, lng);
+
+                    points.add(position);
+                }
+
+                lineOptions.addAll(points);
+                lineOptions.width(10);
+                lineOptions.color(getColor(R.color.blue));
+            }
+
+            // Drawing polyline in the Google Map for the i-th route
+            mMap.addPolyline(lineOptions);
+        }
+    }
+
+    private void loadPlaces() throws IOException {
+        Geocoder geocoder = new Geocoder(MainActivity.this, Locale.getDefault());
+        List<Address> addresses = geocoder.getFromLocationName(
+                txtDropOff.getText().toString(),
+                5,
+                calambaBounds.southwest.latitude,
+                calambaBounds.southwest.longitude,
+                calambaBounds.northeast.latitude,
+                calambaBounds.northeast.longitude);
+        List<String> xaddressList = new ArrayList<>();
+
+        for(Address address: addresses) {
+            xaddressList.add(address.getAddressLine(0));
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, android.R.layout.simple_dropdown_item_1line, xaddressList);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        txtDropOff.setAdapter(adapter);
     }
 }
