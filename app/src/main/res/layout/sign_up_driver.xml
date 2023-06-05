@@ -52,7 +52,7 @@
                 <EditText
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/person"
-                    android:hint="Pangalan"
+                    android:hint="First Name"
                     android:id="@+id/eFullName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -60,7 +60,7 @@
                 <EditText
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/person"
-                    android:hint="Pangitnang Apelyido"
+                    android:hint="Middle Name"
                     android:id="@+id/eMiddleName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -68,7 +68,7 @@
                 <EditText
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/person"
-                    android:hint="Apelyido"
+                    android:hint="Last Name"
                     android:id="@+id/eLastName"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -86,7 +86,7 @@
                     android:inputType="phone"
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/ic_iphone"
-                    android:hint="Numero ng selpon"
+                    android:hint="Phone Number"
                     android:layout_gravity="center"
                     android:id="@+id/ePhoneNumber"
                     android:layout_width="match_parent"
@@ -104,7 +104,7 @@
                 <EditText
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/ic_award"
-                    android:hint="Numero ng Traysikel"
+                    android:hint="Tricycle Number"
                     android:id="@+id/eTricycleNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
@@ -112,13 +112,13 @@
                 <EditText
                     android:drawableTint="@color/colorPrimary"
                     android:drawableStart="@drawable/ic_text"
-                    android:hint="Plaka ng Motor"
+                    android:hint="Plate Number"
                     android:id="@+id/ePlateNumber"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <AutoCompleteTextView
-                    android:hint="TODANG Nasalihan"
+                    android:hint="TODA"
                     android:id="@+id/todaAutocomplete"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -132,7 +132,7 @@
                     android:gravity="center"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="* Larawan ng lisensya" />
+                    android:text="* Driver's License" />
 
                 <ImageView
                     android:tint="@color/colorPrimary"
@@ -150,7 +150,7 @@
                     android:gravity="center"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="* Larawan ng prangkisa" />
+                    android:text="* Franchise" />
 
                 <ImageView
                     android:tint="@color/colorPrimary"
@@ -168,7 +168,7 @@
                     android:gravity="center"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="* Larawan ng Motor" />
+                    android:text="* Motorcycle" />
 
                 <ImageView
                     android:tint="@color/colorPrimary"
@@ -186,7 +186,7 @@
                     android:gravity="center"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="* Larawan ng Traysikel" />
+                    android:text="* Tricycle" />
 
                 <ImageView
                     android:tint="@color/colorPrimary"
@@ -205,7 +205,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/colorPrimary"
-                    android:text="MAGREGISTRO"
+                    android:text="REGISTER"
                     android:textColor="#ffffff"
                     android:textSize="18dp"
                     android:textStyle="bold" />
@@ -216,7 +216,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:background="@color/green"
-                    android:text="IKANSELA"
+                    android:text="CANCEL"
                     android:textColor="#ffffff"
                     android:textSize="18dp"
                     android:textStyle="bold" />
@@ -226,6 +226,95 @@
             <LinearLayout
                 android:visibility="gone"
                 android:id="@+id/signupDriverLinearLayout2"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorPrimary"
+                    android:text="Enter OTP sent to your email"/>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <EditText
+                        android:textAlignment="center"
+                        android:maxLength="1"
+                        android:layout_margin="2dp"
+                        android:layout_gravity="center"
+                        android:id="@+id/otp1"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:textSize="24dp"
+                        android:inputType="number" />
+
+                    <EditText
+                        android:textAlignment="center"
+                        android:maxLength="1"
+                        android:layout_margin="2dp"
+                        android:layout_gravity="center"
+                        android:id="@+id/otp2"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:textSize="24dp"
+                        android:inputType="number" />
+
+                    <EditText
+                        android:textAlignment="center"
+                        android:maxLength="1"
+                        android:layout_margin="2dp"
+                        android:layout_gravity="center"
+                        android:id="@+id/otp3"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:textSize="24dp"
+                        android:inputType="number" />
+
+                    <EditText
+                        android:textAlignment="center"
+                        android:maxLength="1"
+                        android:layout_margin="2dp"
+                        android:layout_gravity="center"
+                        android:id="@+id/otp4"
+                        android:layout_width="0dp"
+                        android:layout_weight="1"
+                        android:layout_height="100dp"
+                        android:textSize="24dp"
+                        android:inputType="number" />
+
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/resendOTP"
+                    android:gravity="end"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/colorPrimary"
+                    android:text="Resend OTP" />
+
+                <Button
+                    android:layout_marginTop="10dp"
+                    android:id="@+id/btnEnterOTP"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/colorPrimary"
+                    android:text="SUBMIT"
+                    android:textColor="#ffffff"
+                    android:textSize="18dp"
+                    android:textStyle="bold" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/signupDriverLinearLayout3"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:orientation="vertical">

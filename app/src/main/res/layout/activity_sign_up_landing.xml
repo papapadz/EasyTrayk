@@ -27,7 +27,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="@color/colorPrimary"
-                android:text="MAGREHISTRO BILANG"
+                android:text="REGISTER AS"
                 android:gravity="center"
                 android:textSize="24sp" />
 
@@ -55,7 +55,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="24sp"
-                        android:text="DRAYBER"
+                        android:text="DRIVER"
                         android:gravity="center"
                         android:textColor="@color/white" />
                 </LinearLayout>
@@ -79,7 +79,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:textSize="24sp"
-                        android:text="PASAHERO"
+                        android:text="PASSENGER"
                         android:gravity="center"
                         android:textColor="@color/white" />
                 </LinearLayout>
@@ -90,7 +90,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
                     android:background="@color/green"
-                    android:text="BUMALIK"
+                    android:text="CANCEL"
                     android:textColor="#ffffff"
                     android:textStyle="bold" />
 

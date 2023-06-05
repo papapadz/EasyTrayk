@@ -131,16 +131,16 @@
 
                                 />
 
-                            <TextView
-                                android:id="@+id/historyFare"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Cyberia Smart Homes"
-                                android:textSize="13sp"
-
-                                />
                         </LinearLayout>
 
+                        <TextView
+                            android:id="@+id/historyFare"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cyberia Smart Homes"
+                            android:textSize="13sp"
+
+                            />
 
                         <TextView
                             android:id="@+id/list_history_feedback"

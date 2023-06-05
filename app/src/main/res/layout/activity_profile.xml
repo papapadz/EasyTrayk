@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".SignUp"
-    android:background="@drawable/side_nav_bar"
+    android:background="@color/colorPrimary"
     android:orientation="vertical">
     <ScrollView
 
@@ -37,7 +37,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="26dp"
                 android:textStyle="bold"
-                android:textColor="@color/green"
+                android:textColor="@color/colorPrimary"
                 android:text="PROFILE"
                 android:layout_marginBottom="10dp"/>
 

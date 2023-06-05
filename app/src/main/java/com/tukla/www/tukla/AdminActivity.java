@@ -124,6 +124,10 @@ public class AdminActivity extends AppCompatActivity implements NavigationView.O
                 finish();
                 startActivity(intent);
                 break;
+            case R.id.nav_trans_list:
+                AdminTransactionFragment adminTransactionFragment = new AdminTransactionFragment();
+                fragmentManager.beginTransaction().replace(R.id.fragment_container,adminTransactionFragment).commit();
+                break;
         }
 
 //        if(id==R.id.nav_user_list) {

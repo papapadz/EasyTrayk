@@ -3,6 +3,7 @@ package com.tukla.www.tukla;
 import static com.tukla.www.tukla.R.id.map;
 import static com.tukla.www.tukla.R.id.nav_logOut;
 import static com.tukla.www.tukla.R.id.nav_profile;
+import static com.tukla.www.tukla.R.id.nav_support;
 
 import android.Manifest;
 import android.app.Activity;
@@ -162,6 +163,8 @@ public class DriverActivity extends AppCompatActivity
     private ListView listViewChatBox;
     private boolean isChatListening = false;
     Button chat_button;
+    Dialog supportDialog;
+    RelativeLayout layoutButtons;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         setupLocationManager();
@@ -171,11 +174,12 @@ public class DriverActivity extends AppCompatActivity
         waitBuilder.setTitle("Please wait...");
         waitBuilder.setMessage("Waiting for passenger to accept this booking.");
         waitDialog = waitBuilder.create();
-
+        supportDialog = new Dialog(DriverActivity.this);
+        supportDialog.setContentView(R.layout.fragment_admin_support);
         hashMapBookings = new HashMap<>();
         super.onCreate( savedInstanceState );
         setContentView( R.layout.driver_activity_main );
-
+        layoutButtons = findViewById(R.id.linearButtons);
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         //database.getReference("users").child(mAuth.getUid()).child("updatedAt").setValue(LocalDateTime.now().toString());
 
@@ -437,16 +441,35 @@ public class DriverActivity extends AppCompatActivity
             startActivity(intent);
             finish();
         } else if(id==nav_logOut) {
-            //FirebaseAuth.getInstance().signOut();
-            FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).child("isActive").setValue(false);
-            Intent intent = new Intent(this, Login.class);
-            startActivity(intent);
-            finish();
+            /** */
+            new android.support.v7.app.AlertDialog.Builder(this)
+                    .setMessage("Are you sure you want to logout?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).child("isActive").setValue(false);
+                            Intent intent = new Intent(DriverActivity.this, Login.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
         } else if(id==nav_profile) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(clickedBookingID).removeValue();
             Intent intent = new Intent(this, ProfileActivity.class);
             startActivity(intent);
             finish();
+        } else if(id==nav_support) {
+
+            supportDialog.show();
+            return true;
         }
 //        if (id == R.id.nav_camera) {
 //            // Handle the camera action
@@ -587,7 +610,10 @@ public class DriverActivity extends AppCompatActivity
                     if(driverDistance<=10) {
                         isPassengerGot = true;
                         driverUpdates.put("is50meters",true);
+                        book_button.setVisibility(View.VISIBLE);
                     } else if(driverDistance<=50) {
+                       //Toast.makeText( DriverActivity.this, "Driver is within 50 meters!", Toast.LENGTH_SHORT ).show();
+                        //layoutButtons.setVisibility(View.VISIBLE);
                         driverUpdates.put("is500meters",true);
                     }
 
@@ -624,8 +650,10 @@ public class DriverActivity extends AppCompatActivity
 
         Button btnOpenChat = dialogView.findViewById(R.id.btnOpenChat);
 
-        if(isPassengerAccept)
+        if(isPassengerAccept) {
+
             btnOpenChat.setVisibility(View.VISIBLE);
+        }
         else
             btnOpenChat.setVisibility(View.GONE);
 
@@ -701,6 +729,8 @@ public class DriverActivity extends AppCompatActivity
                     isAccepted=true;
                     book_button.setText("");
                     book_button.setBackgroundColor(getColor(R.color.blue));
+                    book_button.setVisibility(View.GONE);
+                    chat_button.setVisibility(View.GONE);
                     acceptButton.setVisibility(View.GONE);
 
                     FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -760,6 +790,8 @@ public class DriverActivity extends AppCompatActivity
                                 if(!mySession.isBookingEmpty())
                                     if(mySession.getBooking().getBookingID().equals(clickedBookingID)) {
                                         if(mySession.getIsAccepted()) {
+
+                                            chat_button.setVisibility(View.VISIBLE);
                                             PassengerDialog.dismiss();
                                             waitDialog.dismiss();
                                             if(!isPassengerAccept) {
@@ -791,7 +823,7 @@ public class DriverActivity extends AppCompatActivity
                                                         mySession.getBooking().getDestination().getLongitude()
                                                 );
                                                 addMarker(targetDestination, mySession.getBooking(),2);
-                                                chat_button.setVisibility(View.GONE);
+                                                //chat_button.setVisibility(View.GONE);
                                                 book_button.setText(CODE_DONE);
                                                 book_button.setBackgroundColor(getColor(R.color.green));
                                                 book_button.setVisibility(View.VISIBLE);
@@ -1298,6 +1330,7 @@ public class DriverActivity extends AppCompatActivity
                             if(dataSnapshot.exists()) {
                                 Booking booking = dataSnapshot.getValue(Booking.class);
                                 if(booking.getIsCancelled()) {
+                                    layoutButtons.setVisibility(View.GONE);
                                     Toast.makeText(getBaseContext(), "Passenger just cancelled your this booking, find another.", Toast.LENGTH_SHORT).show();
 
                                     mMap.clear();

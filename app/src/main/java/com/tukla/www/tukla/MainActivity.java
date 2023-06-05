@@ -5,7 +5,9 @@ import static com.tukla.www.tukla.R.id.listviewMessages;
 import static com.tukla.www.tukla.R.id.map;
 import static com.tukla.www.tukla.R.id.message;
 import static com.tukla.www.tukla.R.id.nav_logOut;
+import static com.tukla.www.tukla.R.id.nav_notif;
 import static com.tukla.www.tukla.R.id.nav_profile;
+import static com.tukla.www.tukla.R.id.nav_support;
 
 import android.Manifest;
 import android.app.Activity;
@@ -26,6 +28,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.provider.Settings;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -114,6 +118,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -190,12 +195,16 @@ public class MainActivity extends AppCompatActivity
     AlertDialog waitingDriverDialog;
     private ListView listViewChatBox;
     ArrayList<Message> messageArrayList = new ArrayList<>();
+    ArrayList<Notif> notifArrayList = new ArrayList<>();
     int numPassenger = 1;
     String[] spinnerItems = {"1","2","3"};
     private TextView numPassengerTxt;
     Dialog chatDialog;
     EditText editTextChat;
     Button sendButtonChat;
+    Dialog notifDialog;
+    ListView listViewNotifs;
+    Dialog supportDialaog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -207,26 +216,34 @@ public class MainActivity extends AppCompatActivity
         Locale.setDefault(locale);
         chatDialog = new Dialog(MainActivity.this);
         chatDialog.setContentView(R.layout.chat_dialog);
+        notifDialog = new Dialog(MainActivity.this);
+        notifDialog.setContentView(R.layout.notif_dialog);
+        supportDialaog = new Dialog(MainActivity.this);
+        supportDialaog.setContentView(R.layout.fragment_admin_support);
+        listViewNotifs = notifDialog.findViewById(R.id.list_view_notif);
         listViewChatBox = chatDialog.findViewById(R.id.list_view_chat);
         editTextChat = chatDialog.findViewById(R.id.edit_text_chat);
         sendButtonChat = chatDialog.findViewById(R.id.button_send_chat);
 
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
         sendButtonChat.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 Message message = new Message(thisSession.getBooking().getUser(),thisSession.getDriver(),editTextChat.getText().toString(),LocalDateTime.now().toString());
                 String key = FirebaseDatabase.getInstance().getReference("messages").push().getKey();
                 FirebaseDatabase.getInstance().getReference("messages").child(thisSession.getBooking().getBookingID()).child(key).setValue(message);
+
+//                Notif notif = new Notif(mAuth.getUid(),"Message: "+editTextChat.getText().toString(),LocalDateTime.now().toString(),false);
+//                String kasdey = database.getReference("notifs").child(thisSession.getDriver().getUserID()).push().getKey();
+//                database.getReference("notifs").child(thisSession.getDriver().getUserID()).child(kasdey).setValue(notif);
+
                 editTextChat.setText("");
             }
         });
 
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
 
         Toolbar toolbar = (Toolbar) findViewById( R.id.toolbar );
         setSupportActionBar( toolbar );
-
-
 
         listViewDriverLocations = findViewById(R.id.listViewDriverNear);
         linearLayoutnearby = findViewById(R.id.linearNearbyList);
@@ -449,12 +466,13 @@ public class MainActivity extends AppCompatActivity
             }
         });
 
-        database.getReference("priceList").addListenerForSingleValueEvent(new ValueEventListener() {
+        database.getReference("priceList").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 for(DataSnapshot snapshot: dataSnapshot.getChildren()) {
                     Fare fare = snapshot.getValue(Fare.class);
                     if(fare.getIsActive()) {
+
                         priceFare = fare.getPrice();
                         priceText.setText(String.format("%.2f",priceFare*numPassenger));
                         break;
@@ -467,6 +485,10 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
+
+
+        listenToNotifs();
+
     }
 
     @Override
@@ -632,18 +654,39 @@ public class MainActivity extends AppCompatActivity
             startActivity(intent);
             finish();
         } else if(id==nav_logOut) {
-            //FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
+            /** */
+            new android.support.v7.app.AlertDialog.Builder(this)
+                    .setMessage("Are you sure you want to logout?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent(MainActivity.this, Login.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
 
-            //FirebaseAuth.getInstance().signOut();
-
-            Intent intent = new Intent(MainActivity.this, Login.class);
-            startActivity(intent);
-            finish();
         } else if(id==nav_profile) {
             //FirebaseDatabase.getInstance().getReference("bookings").child(recentBookingID).removeValue();
             Intent intent = new Intent(this, ProfileActivity.class);
             startActivity(intent);
             finish();
+        } else if(id==nav_notif) {
+
+            notifDialog.show();
+            return true;
+        } else if(id==nav_support) {
+
+            supportDialaog.show();
+            return true;
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById( R.id.drawer_layout );
@@ -1141,7 +1184,8 @@ public class MainActivity extends AppCompatActivity
         }
 
         if(!loggedInUser.getCategory().equals("Regular")) {
-            fare = Math.ceil(fare * .90);
+            double disc = Math.ceil(fare * .10);
+            fare = fare - disc;
         }
 
         distanceText.setText(distanceKm+"");
@@ -1199,7 +1243,7 @@ public class MainActivity extends AppCompatActivity
                         isCancelled = false;
                         waitingDriverDialog.dismiss();
                         book_button.setBackgroundColor(getColor(R.color.colorRed));
-                        Toast.makeText(getBaseContext(), "Driver found! Click Accept or Reject.", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getBaseContext(), "Driver found!", Toast.LENGTH_SHORT).show();
 
                         database.getReference("sessions").child(booking.getBookingID()).addListenerForSingleValueEvent(new ValueEventListener() {
                             @Override
@@ -1320,7 +1364,6 @@ public class MainActivity extends AppCompatActivity
 
         button.setText("Accept");
         buttonCancel.setText("Reject");
-
         if(mb.getIsAccepted()) {
             button.setVisibility(View.GONE);
             buttonCancel.setVisibility(View.GONE);
@@ -1328,7 +1371,7 @@ public class MainActivity extends AppCompatActivity
             button.setVisibility(View.VISIBLE);
             buttonCancel.setVisibility(View.VISIBLE);
         }
-
+        buttonCancel.setVisibility(View.GONE);
        // EditText txtMessage = dialogView.findViewById(R.id.txtMessage);
        // Button btnSendMessage = dialogView.findViewById(R.id.sendMessage);
         builder.setView(dialogView);
@@ -1579,6 +1622,47 @@ public class MainActivity extends AppCompatActivity
         return distance <= radius;
     }
 
+    public void listenToNotifs() {
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+        database.getReference("notifs").child(mAuth.getUid()).addChildEventListener(new ChildEventListener() {
+            @Override
+            public void onChildAdded(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+                Notif notif = dataSnapshot.getValue(Notif.class);
+                notifArrayList.add(notif);
+                Collections.reverse(notifArrayList);
+                NotifsAdapter notifsAdapter = new NotifsAdapter(MainActivity.this, notifArrayList);
+                listViewNotifs.setAdapter(notifsAdapter);
+//                new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(getApplicationContext(), "You have a new notification...", Toast.LENGTH_SHORT).show();
+//                    }
+//                });
+            }
+
+            @Override
+            public void onChildChanged(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onChildRemoved(@NonNull DataSnapshot dataSnapshot) {
+
+            }
+
+            @Override
+            public void onChildMoved(@NonNull DataSnapshot dataSnapshot, @Nullable String s) {
+
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError databaseError) {
+
+            }
+        });
+    }
+
     public void listenToChat() {
 
         DatabaseReference messageRef = FirebaseDatabase.getInstance().getReference("messages").child(recentBookingID);
@@ -1592,7 +1676,7 @@ public class MainActivity extends AppCompatActivity
                     MessageAdapter messageAdapter = new MessageAdapter(MainActivity.this, messageArrayList);
                     listViewChatBox.setAdapter(messageAdapter);
 
-                    if(message.getReceiver().equals(mAuth.getUid()))
+                    if(message.getReceiver().getUserID().equals(mAuth.getUid()))
                         Toast.makeText(MainActivity.this,"You have a message", Toast.LENGTH_LONG);
                 }
             }

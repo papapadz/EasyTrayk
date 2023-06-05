@@ -89,7 +89,6 @@ public class AdminPriceListFragment extends Fragment {
         listView.setAdapter(adapter);
 
         FirebaseDatabase firebaseDatabase = FirebaseDatabase.getInstance();
-
         firebaseDatabase.getReference("priceList").addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -150,6 +149,24 @@ public class AdminPriceListFragment extends Fragment {
                     priceRef.child(key).setValue(fareObj);
                     linearLayout.setVisibility(View.GONE);
                     txtNewPrice.setText("");
+
+                    firebaseDatabase.getReference("users").addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                            for(DataSnapshot userSnapshot: dataSnapshot.getChildren()) {
+                                if(!userSnapshot.getKey().equals(mAuth.getUid())) {
+                                    Notif notif = new Notif(mAuth.getUid(),"Price has been updated to "+price,LocalDateTime.now().toString(),false);
+                                    String key = firebaseDatabase.getReference("notifs").child(userSnapshot.getKey()).push().getKey();
+                                    firebaseDatabase.getReference("notifs").child(userSnapshot.getKey()).child(key).setValue(notif);
+                                }
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+                        }
+                    });
                 } else {
                     txtNewPrice.setError("Input must be numerical!");
                 }
@@ -157,8 +174,6 @@ public class AdminPriceListFragment extends Fragment {
 
             }
         });
-
-
         return view;
     }
 }

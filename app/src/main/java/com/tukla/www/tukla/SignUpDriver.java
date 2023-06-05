@@ -25,6 +25,12 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -46,7 +52,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class SignUpDriver extends AppCompatActivity {
 
@@ -81,6 +89,12 @@ public class SignUpDriver extends AppCompatActivity {
     private Boolean isWithMotor=false;
     private Boolean isWithTricycle=false;
     private List<String> categoriesList = new ArrayList<>();
+    private TextView otp1;
+    private TextView otp2;
+    private TextView otp3;
+    private TextView otp4;
+    private TextView resendOTP;
+    private String otp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -154,6 +168,19 @@ public class SignUpDriver extends AppCompatActivity {
         imgTricycle=findViewById(R.id.img_tricycle);
         Button buttonBack = findViewById(R.id.button3);
         eToda = findViewById(R.id.todaAutocomplete);
+
+        otp1 = findViewById(R.id.otp1);
+        otp2 = findViewById(R.id.otp2);
+        otp3 = findViewById(R.id.otp3);
+        otp4 = findViewById(R.id.otp4);
+        resendOTP = findViewById(R.id.resendOTP);
+
+        resendOTP.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                sendOTP(email_id.getText().toString());
+            }
+        });
 
         eToda.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -270,14 +297,14 @@ public class SignUpDriver extends AppCompatActivity {
 
         LinearLayout linearLayout1 = findViewById(R.id.signupDriverLinearLayout1);
         LinearLayout linearLayout2 = findViewById(R.id.signupDriverLinearLayout2);
+        LinearLayout linearLayout3 = findViewById(R.id.signupDriverLinearLayout3);
+
         Button btnNext = findViewById(R.id.button4);
         btnNext.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 if(checkEmailPassword(email_id.getText().toString(),mpassword.getText().toString())) {
-                    FirebaseAuth mAuth = FirebaseAuth.getInstance();
-
                     mAuth.fetchSignInMethodsForEmail(email_id.getText().toString())
                             .addOnCompleteListener(new OnCompleteListener<SignInMethodQueryResult>() {
                                 @Override
@@ -289,6 +316,9 @@ public class SignUpDriver extends AppCompatActivity {
                                             email_id.requestFocus();
                                             email_id.setError("Email already exists!");
                                         } else {
+                                            mAuth.createUserWithEmailAndPassword(email_id.getText().toString(),"password");
+                                            sendOTP(email_id.getText().toString());
+
                                             linearLayout1.setVisibility(View.GONE);
                                             linearLayout2.setVisibility(View.VISIBLE);
                                         }
@@ -299,7 +329,63 @@ public class SignUpDriver extends AppCompatActivity {
                 }
             }
         });
+
+        Button btnOTP = findViewById(R.id.btnEnterOTP);
+        btnOTP.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                String myOtp = otp1.getText().toString() + otp2.getText().toString() + otp3.getText().toString() + otp4.getText().toString();
+
+                if (otp.contains(myOtp)) {
+                    linearLayout2.setVisibility(View.GONE);
+                    linearLayout3.setVisibility(View.VISIBLE);
+                } else {
+                    Toast.makeText(getApplicationContext(), "OTP is incorrect!", Toast.LENGTH_SHORT)
+                            .show();
+                }
+
+            }
+        });
     }
+
+    private void sendOTP(String email) {
+        final ProgressDialog pdialog = ProgressDialog.show(SignUpDriver.this, "",
+                "Loading. Please wait...", true);
+
+        mAuth.signInWithEmailAndPassword(email,"password").addOnCompleteListener(new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                Random rand = new Random();
+                HashMap<String, Object> hashMap = new HashMap<>();
+                hashMap.put("email",email);
+                otp = String.format("%04d%n", rand.nextInt(10000));
+                hashMap.put("otp",otp);
+
+                FirebaseDatabase.getInstance().getReference().child("otps").child(mAuth.getUid()).updateChildren(hashMap);
+
+                String url = "https://sendmail.binarybee.org/sendMail.php?email=" + email + "&otp=" + otp;
+                RequestQueue queue = Volley.newRequestQueue(SignUpDriver.this);
+                StringRequest stringRequest = new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        pdialog.dismiss();
+                        Toast.makeText(SignUpDriver.this, "Check your email for OTP",
+                                Toast.LENGTH_SHORT).show();
+                    }}, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        pdialog.dismiss();
+                        Toast.makeText(SignUpDriver.this, "Error sending OTP",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                });
+                queue.add(stringRequest);
+            }
+        });
+
+    }
+
 
     private void checkPassword() {
         if(mpassword.getText().toString().length()<8)
@@ -311,7 +397,7 @@ public class SignUpDriver extends AppCompatActivity {
             mconfirmpassword.requestFocus();
             mconfirmpassword.setError("Password does not match");
         } else{
-            registerUser(email_id.getText().toString(),mpassword.getText().toString());
+            registerUser(mpassword.getText().toString());
         }
     }
 
@@ -379,32 +465,28 @@ public class SignUpDriver extends AppCompatActivity {
         return false;
     }
 
-    private void registerUser(String email,String password) {
+    private void registerUser(String password) {
         final ProgressDialog dialog = ProgressDialog.show(SignUpDriver.this, "",
-                "Loading. Please wait...", true);
-        mAuth.createUserWithEmailAndPassword(email,password)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
+                "Loading. Please wait...", true);dialog.dismiss();
 
-                        if (task.isSuccessful()) {
-                            dialog.dismiss();
-                            showErrorDailog("Successfully Registered. Please check your email for verification",1);
-                            FirebaseUser firebaseUser = mAuth.getCurrentUser();
-                            updateDatabase();
-                            //UpdateUI(firebaseUser);
-                            sendEmailVerification(firebaseUser);
-                            Intent intent =new Intent(SignUpDriver.this,Login.class);
-                            finish();
-                            startActivity(intent);
-                        } else {
-                            dialog.dismiss();
-                            Toast.makeText(getApplicationContext(), "Unsuccessful registration", Toast.LENGTH_SHORT)
-                                    .show();
-                            //UpdateUI(null);
-                        }
-                    }
-                });
+        mAuth.getCurrentUser().updatePassword(password).addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    dialog.dismiss();
+                    showErrorDailog("Successfully registered, please wait for admin to verify your account",1);
+                    updateDatabase();
+                    Intent intent =new Intent(SignUpDriver.this,Login.class);
+                    finish();
+                    startActivity(intent);
+                } else {
+                    dialog.dismiss();
+                    Toast.makeText(getApplicationContext(), "Unsuccessful registration", Toast.LENGTH_SHORT)
+                            .show();
+                    UpdateUI(null);
+                }
+            }
+        });
 
     }
 
@@ -425,10 +507,7 @@ public class SignUpDriver extends AppCompatActivity {
             Driver driver = new Driver(eToda.getText().toString(),ePlateNumber.getText().toString(),eTricycleNumber.getText().toString());
             User user = new User(mAuth.getUid(),eFullName.getText().toString(),eMiddleName.getText().toString(),eLastName.getText().toString(),eAddress.getText().toString(),ePhoneNumber.getText().toString(),true, false, LocalDateTime.now().toString(),false, driver,false,"None");
             myRefUsers.child(mAuth.getUid()).setValue(user);
-
-
         }
-
     }
 
     private  void showErrorDailog(String message, int type)

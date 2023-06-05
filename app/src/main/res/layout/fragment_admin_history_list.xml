@@ -16,6 +16,7 @@
         android:orientation="vertical">
 
         <EditText
+            android:visibility="gone"
             android:id="@+id/adminHistorySearch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -23,6 +24,12 @@
             android:textSize="18dp"
             />
 
+        <TextView
+            android:id="@+id/historyTotal"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="18dp" />
         <ListView
             android:id="@+id/adminListHistory"
             android:layout_width="match_parent"

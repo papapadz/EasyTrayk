@@ -1,6 +1,7 @@
 package com.tukla.www.tukla;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
@@ -13,9 +14,17 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.bumptech.glide.Glide;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -26,6 +35,7 @@ import com.google.firebase.storage.StorageReference;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 
 public class UserListAdapter extends BaseAdapter {
 
@@ -95,42 +105,47 @@ public class UserListAdapter extends BaseAdapter {
             }
         });
 
-                if(data.getIsDriver()) {
-                    TextView textViewTransactions = convertView.findViewById(R.id.textViewTransactions);
-                    TextView textViewPlateNumber = convertView.findViewById(R.id.textViewPlateNumber);
-                    TextView textViewToda = convertView.findViewById(R.id.textViewTODA);
-                    TextView textViewTricycleNumber = convertView.findViewById(R.id.textViewTricycleNumber);
-
-                    textViewPlateNumber.setText(data.getDriver().getPlateNumber());
-                    textViewToda.setText(data.getDriver().getToda());
-                    textViewTricycleNumber.setText(data.getDriver().getTricycleNumber());
-
-                    FirebaseDatabase.getInstance().getReference("history").addListenerForSingleValueEvent(new ValueEventListener() {
-                        @Override
-                        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                            int count = 0;
-                            for(DataSnapshot child: dataSnapshot.getChildren()) {
-                                History history = child.getValue(History.class);
-                                if(history.getSession().getDriver().getUserID().equals(data.getUserID()))
-                                    count+=1;
-;                            }
-                            textViewTransactions.setText(count+"");
-                            textViewTransactions.setVisibility(View.VISIBLE);
-                        }
-
-                        @Override
-                        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-                        }
-                    });
-                    LinearLayout forDriverLayout = convertView.findViewById(R.id.forDriver);
+                    //LinearLayout forDriverLayout = convertView.findViewById(R.id.forDriver);
                     LinearLayout forDriverLayout2 = convertView.findViewById(R.id.driverInfo);
-                    forDriverLayout.setVisibility(View.VISIBLE);
-                    forDriverLayout2.setVisibility(View.VISIBLE);
+
                     StorageReference franchiseRef = storageRef.child("franchises/" + data.getUserID() + ".jpg");
                     StorageReference licRef = storageRef.child("licenses/" + data.getUserID() + ".jpg");
                     StorageReference motorRef = storageRef.child("motors/" + data.getUserID() + ".jpg");
                     StorageReference tricyRef = storageRef.child("tricycles/" + data.getUserID() + ".jpg");
+
+        if(data.getIsDriver()) {
+            //TextView textViewTransactions = convertView.findViewById(R.id.textViewTransactions);
+            TextView textViewPlateNumber = convertView.findViewById(R.id.textViewPlateNumber);
+            TextView textViewToda = convertView.findViewById(R.id.textViewTODA);
+            TextView textViewTricycleNumber = convertView.findViewById(R.id.textViewTricycleNumber);
+
+            textViewPlateNumber.setText(data.getDriver().getPlateNumber());
+            textViewToda.setText(data.getDriver().getToda());
+            textViewTricycleNumber.setText(data.getDriver().getTricycleNumber());
+            //forDriverLayout.setVisibility(View.VISIBLE);
+            forDriverLayout2.setVisibility(View.VISIBLE);
+
+//            FirebaseDatabase.getInstance().getReference("history").addListenerForSingleValueEvent(new ValueEventListener() {
+//                @Override
+//                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                    int count = 0;
+//                    for(DataSnapshot child: dataSnapshot.getChildren()) {
+//                        History history = child.getValue(History.class);
+//                        if(history.getSession().getDriver().getUserID().equals(data.getUserID()))
+//                            count+=1;
+//                        ;                            }
+//                    //textViewTransactions.setText(count+"");
+//                    //textViewTransactions.setVisibility(View.VISIBLE);
+//                }
+//
+//                @Override
+//                public void onCancelled(@NonNull DatabaseError databaseError) {
+//
+//                }
+//            });
+
+
+        }
 
                     linearLayout.setOnClickListener(new View.OnClickListener() {
                         @Override
@@ -144,16 +159,6 @@ public class UserListAdapter extends BaseAdapter {
                             ImageView dialogImageView3 = dialogView.findViewById(R.id.admin_id_img3);
                             ImageView dialogImageView4 = dialogView.findViewById(R.id.admin_id_img4);
                             // set the image for ImageView
-                            franchiseRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    Glide.with(dialogImageView.getContext())
-                                            .load(uri)
-                                            .fitCenter()
-                                            .into(dialogImageView);
-                                }
-                            });
-
                             licRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                                 @Override
                                 public void onSuccess(Uri uri) {
@@ -164,25 +169,43 @@ public class UserListAdapter extends BaseAdapter {
                                 }
                             });
 
-                            motorRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    Glide.with(dialogImageView3.getContext())
-                                            .load(uri)
-                                            .fitCenter()
-                                            .into(dialogImageView3);
-                                }
-                            });
+                            if(data.getIsDriver()) {
+                                dialogImageView.setVisibility(View.VISIBLE);
+                                dialogImageView3.setVisibility(View.VISIBLE);
+                                dialogImageView4.setVisibility(View.VISIBLE);
+                                franchiseRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        Glide.with(dialogImageView.getContext())
+                                                .load(uri)
+                                                .fitCenter()
+                                                .into(dialogImageView);
+                                    }
+                                });
 
-                            tricyRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-                                @Override
-                                public void onSuccess(Uri uri) {
-                                    Glide.with(dialogImageView4.getContext())
-                                            .load(uri)
-                                            .fitCenter()
-                                            .into(dialogImageView4);
-                                }
-                            });
+
+
+                                motorRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        Glide.with(dialogImageView3.getContext())
+                                                .load(uri)
+                                                .fitCenter()
+                                                .into(dialogImageView3);
+                                    }
+                                });
+
+                                tricyRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                    @Override
+                                    public void onSuccess(Uri uri) {
+                                        Glide.with(dialogImageView4.getContext())
+                                                .load(uri)
+                                                .fitCenter()
+                                                .into(dialogImageView4);
+                                    }
+                                });
+                            }
+
                             // create the dialog box
                             AlertDialog.Builder builder = new AlertDialog.Builder(context);
                             builder.setView(dialogView);
@@ -190,25 +213,32 @@ public class UserListAdapter extends BaseAdapter {
                             builder.show();
                         }
                     });
-                }
+
         button.setVisibility(View.VISIBLE);
         button2.setVisibility(View.VISIBLE);
-
-        if (data.getIsVerified()) {
+        if(data.getIsRejected()) {
             button.setVisibility(View.GONE);
             button2.setVisibility(View.GONE);
         }
-        if(data.getIsRejected()) {
+        if (data.getIsVerified()) {
+            button.setVisibility(View.GONE);
+            button2.setVisibility(View.GONE);
+        } else {
             button.setVisibility(View.VISIBLE);
             button2.setVisibility(View.GONE);
         }
+
+
         button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                final ProgressDialog pdialog = ProgressDialog.show(context, "",
+                        "Sending email. Please wait...", true);
                 HashMap<String, Object> hashMap = new HashMap<>();
                 hashMap.put("isVerified",true);
                 hashMap.put("isRejected",false);
                 database.getReference().child("users").child(data.getUserID()).updateChildren(hashMap);
+                pdialog.dismiss();
                 showDialog("User Verified!");
             }
         });

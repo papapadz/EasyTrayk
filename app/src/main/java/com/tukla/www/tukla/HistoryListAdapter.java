@@ -14,6 +14,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.text.DecimalFormat;
 import java.util.List;
 
 public class HistoryListAdapter extends BaseAdapter {
@@ -46,7 +47,7 @@ public class HistoryListAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-
+        final DecimalFormat df = new DecimalFormat("0.00");
         if (data.isEmpty()) {
             convertView = LayoutInflater.from(context).inflate(R.layout.empty_list, parent, false);
             return convertView;
@@ -88,14 +89,14 @@ public class HistoryListAdapter extends BaseAdapter {
         if(data.getSession().getDriver().getUserID().equals(mAuth.getUid())) {
             historyFeedback.setVisibility(View.VISIBLE);
             historyName.setText("Passenger: "+data.getSession().getBooking().getUser().getFullname());
-            historyFare.setText(" PHP "+data.getFare());
+            historyFare.setText("Php "+df.format(data.getFare()));
+
         } else if(data.getSession().getBooking().getUser().getUserID().equals(mAuth.getUid())) {
             historyName.setText("Driver: "+data.getSession().getDriver().getFullname());
-            historyFare.setText(" PHP "+data.getFare());
+            historyFare.setText("Php "+df.format(data.getFare()));
         } else {
-            historyFare.setText("");
             historyFeedback.setVisibility(View.VISIBLE);
-            historyName.setText("Passenger: "+data.getSession().getBooking().getUser().getFullname() + "\n" + "Driver: "+data.getSession().getDriver().getFullname() + "\n" + "Fare: PHP "+data.getFare());
+            historyName.setText("Passenger: "+data.getSession().getBooking().getUser().getFullname() + "\n" + "Driver: "+data.getSession().getDriver().getFullname() + "\n" + "Fare: PHP "+df.format(data.getFare()));
         }
         return convertView;
     }

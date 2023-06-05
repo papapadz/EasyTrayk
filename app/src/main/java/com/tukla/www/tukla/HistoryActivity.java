@@ -2,7 +2,10 @@ package com.tukla.www.tukla;
 
 import static com.tukla.www.tukla.R.id.nav_logOut;
 import static com.tukla.www.tukla.R.id.nav_profile;
+import static com.tukla.www.tukla.R.id.nav_support;
 
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -10,6 +13,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -43,12 +47,14 @@ public class HistoryActivity extends AppCompatActivity implements NavigationView
     private FirebaseAuth mAuth;
     private ListView listView;
     private String role;
+    Dialog supportDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_history);
-
+        supportDialog = new Dialog(HistoryActivity.this);
+        supportDialog.setContentView(R.layout.fragment_admin_support);
         mAuth = FirebaseAuth.getInstance();
         listView = findViewById(R.id.list_history);
 
@@ -145,15 +151,34 @@ public class HistoryActivity extends AppCompatActivity implements NavigationView
                 intent = new Intent(this, DriverActivity.class);
             startActivity(intent);
         } else if(id==nav_logOut) {
-            //FirebaseAuth.getInstance().signOut();
-            if(role.equals("DRIVER"))
-                FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).removeValue();
-            Intent intent = new Intent(this, Login.class);
-            finish();
-            startActivity(intent);
+            /** */
+            new android.support.v7.app.AlertDialog.Builder(this)
+                    .setMessage("Are you sure you want to logout?")
+                    .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            if(role.equals("DRIVER"))
+                                FirebaseDatabase.getInstance().getReference("driverLocations").child(mAuth.getUid()).removeValue();
+                            Intent intent = new Intent(HistoryActivity.this, Login.class);
+                            finish();
+                            startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i) {
+                            dialogInterface.dismiss();
+                        }
+                    })
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
         } else if(id==nav_profile) {
             Intent intent = new Intent(this, ProfileActivity.class);
             startActivity(intent);
+        } else if(id==nav_support) {
+
+            supportDialog.show();
+            return true;
         }
 
         return false;

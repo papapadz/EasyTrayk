@@ -48,7 +48,7 @@
                 android:layout_weight="1"
                 android:background="@color/colorPrimary"
                 android:textColor="@color/white"
-                android:text="TANNGAPIN" />
+                android:text="I Accept" />
 
             <Button
                 android:layout_margin="5dp"
@@ -56,9 +56,9 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:background="@color/colorRed"
+                android:background="@color/green"
                 android:textColor="@color/white"
-                android:text="IKANSELA" />
+                android:text="CANCEL" />
 
         </LinearLayout>
 
